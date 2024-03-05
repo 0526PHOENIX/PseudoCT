@@ -36,9 +36,9 @@ METRICS_DIS = 1
 METRICS_PSNR = 2
 METRICS_SSIM = 3
 
-DATA_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/Fake/Train"
+DATA_PATH = "/home/ccy/PseudoCT/Fake/Train"
 MODEL_PATH = ""
-RESULTS_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/GAN/Result"
+RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
 
 """
@@ -475,9 +475,19 @@ class Training():
         # get predict
         fake2_g = self.gen(real1_g)
 
-        real1_a = real1_g.to('cpu').detach().numpy()[0]
+        real1_a = real1_g.to('cpu').detach().numpy()[:, 3, :, :]
         real2_a = real2_g.to('cpu').detach().numpy()[0]
         fake2_a = fake2_g.to('cpu').detach().numpy()[0]
+        
+        real1_a -= real1_a.min()
+        real1_a /= real1_a.max()
+        
+        real2_a -= real2_a.min()
+        real2_a /= real2_a.max()
+        
+        print(real1_a.min(), real1_a.max())
+        print(real2_a.min(), real2_a.max())
+        print(fake2_a.min(), fake2_a.max())
 
         # save image to tensorboard writer
         writer = getattr(self, mode + '_writer')
