@@ -28,7 +28,7 @@ Global Constant
 """
 MAX = 10000000
 STRIDE = 5
-BATCH = 32
+BATCH = 128
 EPOCH = 10
 
 METRICS = 4
@@ -37,9 +37,9 @@ METRICS_DIS = 1
 METRICS_PSNR = 2
 METRICS_SSIM = 3
 
-DATA_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/Fake/Train"
+DATA_PATH = "/home/ccy/PseudoCT/Data/Train"
 MODEL_PATH = ""
-RESULTS_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/GAN/Result"
+RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
 
 """
@@ -282,8 +282,8 @@ class Training():
             real2_g /= self.max2 + 1e-6
 
             # Ground Truth
-            valid = torch.ones(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
-            fake = torch.zeros(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
+            valid = torch.ones(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
+            fake = torch.zeros(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
 
             # Get sCT from Generator
             # fake2: sCT
@@ -403,8 +403,8 @@ class Training():
                 real2_g /= self.max2 + 1e-6
 
                 # Ground Truth
-                valid = torch.ones(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
-                fake = torch.zeros(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
+                valid = torch.ones(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
+                fake = torch.zeros(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
 
                 # Get sCT from Generator
                 # fake2: sCT
