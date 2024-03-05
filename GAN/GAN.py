@@ -13,7 +13,7 @@ from Unet import Unet
 
 """
 ====================================================================================================
-Generator
+Generator: Unet
 ====================================================================================================
 """
 class Generator(Unet):
@@ -34,9 +34,7 @@ class Init(nn.Module):
 
         super().__init__()
 
-        self.filters = filters
-
-        self.init_block = nn.Sequential(nn.Conv2d(8, filters, 4, stride = 2, padding = 1),
+        self.init_block = nn.Sequential(nn.Conv2d(8, filters, kernel_size = 4, stride = 2, padding = 1),
                                         nn.LeakyReLU(0.01))
 
     def forward(self, img_in):
@@ -57,9 +55,7 @@ class Dis(nn.Module):
 
         super().__init__()
 
-        self.filters = filters
-
-        self.dis_block = nn.Sequential(nn.Conv2d(filters // 2, filters, 4, stride = 2, padding = 1),
+        self.dis_block = nn.Sequential(nn.Conv2d(filters // 2, filters, kernel_size = 4, stride = 2, padding = 1),
                                        nn.BatchNorm2d(filters),
                                        nn.LeakyReLU(0.01))
 
@@ -81,10 +77,8 @@ class Final(nn.Module):
 
         super().__init__()
 
-        self.filters = filters
-
         self.final_block = nn.Sequential(nn.ZeroPad2d((1, 0, 1, 0)),
-                                         nn.Conv2d(512, 1, 4, padding = 1, bias = False))
+                                         nn.Conv2d(filters, 1, kernel_size = 4, padding = 1, bias = False))
 
     def forward(self, img_in):
 

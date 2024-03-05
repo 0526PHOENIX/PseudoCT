@@ -9,8 +9,6 @@ from scipy import io
 from matplotlib import pyplot as plt
 
 import torch
-import torch.nn.functional as F
-import torchvision.transforms as T
 from torch.utils.data import Dataset
 
 
@@ -23,22 +21,22 @@ class Training_2D(Dataset):
 
     def __init__(self, root = "", is_val = False, val_stride = 10, slice = 7):
 
-        # file path setting
+        # Filepath
         self.root = root
         self.images_path = os.path.join(self.root, 'MR')
         self.labels_path = os.path.join(self.root, 'CT')
 
-        # load image path into list
+        # MR File List
         self.images = []
         for series in sorted(os.listdir(self.images_path)):
             self.images.append(os.path.join(self.images_path, series))
 
-        # load label path into list
+        # CT File List
         self.labels = []
         for series in sorted(os.listdir(self.labels_path)):
             self.labels.append(os.path.join(self.labels_path, series))
 
-        # split training and validation
+        # Split Training and Validation Dataset
         if is_val:
             self.images = self.images[::val_stride]
             self.labels = self.labels[::val_stride]
@@ -46,20 +44,20 @@ class Training_2D(Dataset):
             del self.images[::val_stride]
             del self.labels[::val_stride]
 
-        # shuffle data
+        # Shuffle Data
         samples = list(zip(self.images, self.labels))
         random.shuffle(samples)
         (self.images, self.labels) = zip(*samples)
 
-        # check data quantity
+        # Check Data Quantity
         if len(self.images) != len(self.labels):
             raise ValueError('Unequal amount of images and labels.')
         
-        # 2D slice parameter
-        self.slice = slice                                                  # channels per slice
-        self.width = self.slice // 2                                        # width
-        self.num_slices = 192 - ((self.width + 1) * 2)                      # slices per series
-        self.num_series = len(self.images)                                  # number of series
+        # 2D Slice Information
+        self.slice = slice                                                  # Channels per Slice
+        self.width = self.slice // 2                                        # Width
+        self.num_slices = 192 - ((self.width + 1) * 2)                      # Slices per Series
+        self.num_series = len(self.images)                                  # Number of Series
         
     def __len__(self):
         
@@ -67,16 +65,16 @@ class Training_2D(Dataset):
 
     def __getitem__(self, index):
         
-        # index
-        series_index = index // self.num_slices                             # which series
-        slices_index = index % self.num_slices + self.width + 1             # which slice
+        # 2D Slice Index
+        series_index = index // self.num_slices                             # Which Series
+        slices_index = index % self.num_slices + self.width + 1             # Which Slice
 
-        # get image data
+        # Load MR Data: (7, 192, 192)
         image = io.loadmat(self.images[series_index])['MR'].astype('float32')
         image = torch.from_numpy(image).to(torch.float32)
         image = image[slices_index - self.width : slices_index + self.width + 1, :, :]
         
-        # get label data
+        # Load CT Data: (1, 192, 192)
         label = io.loadmat(self.labels[series_index])['CT'].astype('float32')
         label = torch.from_numpy(label).to(torch.float32)
         label = label[slices_index, :, :].unsqueeze(0)
@@ -93,35 +91,35 @@ class Testing_2D(Dataset):
 
     def __init__(self, root = ""):
 
-        # file path setting
+        # Filepath
         self.root = root
         self.images_path = os.path.join(self.root, 'MR')
         self.labels_path = os.path.join(self.root, 'CT')
 
-        # load image path into list
+        # MR File List
         self.images = []
         for series in sorted(os.listdir(self.images_path)):
             self.images.append(os.path.join(self.images_path, series))
 
-        # load label path into list
+        # CT File List
         self.labels = []
         for series in sorted(os.listdir(self.labels_path)):
             self.labels.append(os.path.join(self.labels_path, series))
 
-        # shuffle data
+        # Shuffle Data
         samples = list(zip(self.images, self.labels))
         random.shuffle(samples)
         (self.images, self.labels) = zip(*samples)
 
-        # check data quantity
+        # Check Data Quantity
         if len(self.images) != len(self.labels):
             raise ValueError('Unequal amount of images and labels.')
         
-        # 2D slice parameter
-        self.slice = slice                                                  # channels per slice
-        self.width = self.slice // 2                                        # width
-        self.num_slices = 262 - ((self.width + 1) * 2)                      # slices per series
-        self.num_series = len(self.images)                                  # number of series
+        # 2D Slice Information
+        self.slice = slice                                                  # Channels per Slice
+        self.width = self.slice // 2                                        # Width
+        self.num_slices = 262 - ((self.width + 1) * 2)                      # Slices per Series
+        self.num_series = len(self.images)                                  # Number of Series
 
     def __len__(self):
 
@@ -129,16 +127,16 @@ class Testing_2D(Dataset):
 
     def __getitem__(self, index):
 
-        # index
-        series_index = index // self.num_slices                             # which series
-        slices_index = index % self.num_slices + self.width + 1             # which slice
+        # 2D Slice Index
+        series_index = index // self.num_slices                             # Which Series
+        slices_index = index % self.num_slices + self.width + 1             # Which Slice
 
-        # get image data
+        # Load MR Data: (7, 192, 192)
         image = io.loadmat(self.images[series_index])['MR'].astype('float32')
         image = torch.from_numpy(image).to(torch.float32)
         image = image[slices_index - self.width : slices_index + self.width + 1, :, :]
         
-        # get label data
+        # Load CT Data: (1, 192, 192)
         label = io.loadmat(self.labels[series_index])['CT'].astype('float32')
         label = torch.from_numpy(label).to(torch.float32)
         label = label[slices_index, :, :].unsqueeze(0)

@@ -8,6 +8,7 @@ import math
 import datetime
 import numpy as np
 from tqdm import tqdm
+from matplotlib import pyplot as plt
 
 import torch
 from torch.optim import Adam
@@ -15,7 +16,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from GAN import Generator, Discriminator
-from Loss import get_adv_loss, get_pix_loss
+from Loss import get_adv_loss, get_pix_loss, get_gdl_loss
 from Loss import get_psnr, get_ssim
 from Dataset import Training_2D
 
@@ -36,9 +37,9 @@ METRICS_DIS = 1
 METRICS_PSNR = 2
 METRICS_SSIM = 3
 
-DATA_PATH = "/home/ccy/PseudoCT/Fake/Train"
+DATA_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/Fake/Train"
 MODEL_PATH = ""
-RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
+RESULTS_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/GAN/Result"
 
 
 """
@@ -50,82 +51,72 @@ class Training():
 
     """
     ================================================================================================
-    Initialize Critical Parameters
+    Critical Parameters
     ================================================================================================
     """
     def __init__(self):
         
-        # training device
-        self.use_cuda = torch.cuda.is_available()
-        self.device = torch.device('cuda' if self.use_cuda else 'cpu')
+        # Training Device: CPU(cpu) or GPU(cuda)
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print('\n' + 'Training on: ' + str(self.device) + '\n')
 
-        # time and tensorboard writer
+        # Training Timestamp
         self.time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
         print('\n' + 'Start From: ' + self.time + '\n')
 
-        self.train_writer = None
-        self.val_writer = None
+        # Model and Optimizer
+        self.initialization()
 
-        # model and optimizer
-        self.init_model()
-        self.init_optimizer()
-
-        # begin epoch
+        # Begin Point
         self.begin = 1
 
     """
     ================================================================================================
-    Initialize Model
+    Model and Optimizer
     ================================================================================================
     """
-    def init_model(self):
+    def initialization(self):
 
+        # Model: Generator and Discriminator
         self.gen = Generator().to(self.device)
         self.dis = Discriminator().to(self.device)
 
         print('\n' + 'Model Initialized' + '\n')
-    
-    """
-    ================================================================================================
-    Initialize Optimizer
-    ================================================================================================
-    """
-    def init_optimizer(self):
-
-        self.optimizer_gen = Adam(self.gen.parameters(), lr = 1e-4)
-        self.optimizer_dis = Adam(self.dis.parameters(), lr = 1e-4)
+        
+        # Optimizer: Adam
+        self.optimizer_gen = Adam(self.gen.parameters())
+        self.optimizer_dis = Adam(self.dis.parameters())
 
         print('\n' + 'Optimizer Initialized' + '\n')
 
     """
     ================================================================================================
-    Initialize TensorBorad
+    TensorBorad
     ================================================================================================
     """
     def init_tensorboard(self):
 
-        if (self.train_writer == None) or (self.val_writer == None):
+        # Metrics Filepath
+        log_dir = os.path.join(RESULTS_PATH, 'Metrics', self.time)
 
-            # metrics path
-            log_dir = os.path.join(RESULTS_PATH, 'Metrics', self.time)
+        # Tensorboard Writer
+        self.train_writer = SummaryWriter(log_dir + '_train')
+        self.val_writer = SummaryWriter(log_dir + '_val')
 
-            # training and validation tensorboard writer
-            self.train_writer = SummaryWriter(log_dir + '_train')
-            self.val_writer = SummaryWriter(log_dir + '_val')
-
-            print('\n' + 'TensorBoard Initialized' + '\n')
+        print('\n' + 'TensorBoard Initialized' + '\n')
 
     """
     ================================================================================================
-    Initialize Data Loader
+    Data Loader
     ================================================================================================
     """
     def init_dl(self):
 
+        # Training
         train_ds = Training_2D(root = DATA_PATH, is_val = False, val_stride = STRIDE)
         train_dl = DataLoader(train_ds, batch_size = BATCH, drop_last = False)
 
+        # Validation
         val_ds = Training_2D(root = DATA_PATH, is_val = True, val_stride = STRIDE)
         val_dl = DataLoader(val_ds, batch_size = BATCH, drop_last = False)
 
@@ -138,34 +129,35 @@ class Training():
     """
     def load_model(self):
 
+        # Check Filepath
         if os.path.isfile(MODEL_PATH):
 
-            # get checkpoint
+            # Get Checkpoint Information
             checkpoint = torch.load(MODEL_PATH)
             print('\n' + 'Checkpoint Loaded' + '\n')
 
-            # load model
+            # Model: Generator and Discriminator
             self.gen.load_state_dict(checkpoint['gen_state'])
             self.dis.load_state_dict(checkpoint['dis_state'])
             print('\n' + 'Model Loaded' + '\n')
             
-            # load optimizer
+            # Optimizer: Adam
             self.optimizer_gen.load_state_dict(checkpoint['optimizer_gen_state'])
             self.optimizer_dis.load_state_dict(checkpoint['optimizer_dis_state'])
             print('\n' + 'Optimizer Loaded' + '\n')
 
-            # set time
+            # Training Timestamp
             self.time = checkpoint['time']
             print('\n' + 'Continued From: ' +  self.time + '\n')
 
-            # set epoch
+            # Begin Point
             if checkpoint['epoch'] < EPOCH:
                 self.begin = checkpoint['epoch'] + 1
             else:
                 self.begin = 1
             print('\n' + 'Start From Epoch: ' + str(self.begin) + '\n')
 
-            # set tensorboard
+            # Tensorboard Writer
             log_dir = os.path.join(RESULTS_PATH, 'Metrics', checkpoint['time'])
             self.train_writer = SummaryWriter(log_dir + '_train')
             self.val_writer = SummaryWriter(log_dir + '_val')
@@ -173,7 +165,8 @@ class Training():
             return checkpoint['score']
         
         else:
-
+            
+            # Tensorboard
             self.init_tensorboard()
         
             return MAX
@@ -185,49 +178,63 @@ class Training():
     """
     def main(self):
 
-        # data loader
+        # Data Loader
         train_dl, val_dl = self.init_dl()
 
-        # load model parameter and get checkpoint
+        # Get Checkpoint
         best_score = self.load_model()
 
-        # main loop
+        # Main Training and Validation Loop
         count = 0
         for epoch_index in range(self.begin, EPOCH + 1):
             
-            # get and save metrics
+            """
+            ========================================================================================
+            Training
+            ========================================================================================
+            """
+            # Get Training Metrics
             print('Training: ')
             metrics_train = self.training(epoch_index, train_dl)
 
+            # Save Training Metrics
             self.save_metrics(epoch_index, 'train', metrics_train)
             self.save_images(epoch_index, 'train', train_dl)
 
-            # check performance for every 10 epochs
+            # Validation: Stride = 10
             if epoch_index == 1 or epoch_index % STRIDE == 0:
-                
-                # get and save metrics
-                print('\n' + 'Validation: ')
+
+                """
+                ====================================================================================
+                Validation
+                ====================================================================================
+                """
+                # Get Validation Metrics
+                print('============================================================')
+                print('Validation: ')
                 metrics_val = self.validation(epoch_index, val_dl)
 
+                # Save Validation Metrics
                 score = self.save_metrics(epoch_index, 'val', metrics_val)
                 self.save_images(epoch_index, 'val', val_dl)
 
-                # save model
+                # Save Model
                 if not math.isnan(score):
                     best_score = min(best_score, score)
                 self.save_model(epoch_index, score, (best_score == score))
 
-                # early stop
+                print('============================================================')
+
+                # Early Stop
                 if score == best_score:
                     count = 0
                 elif count < 5:
                     count += 1
                 elif count == 5:
-                    print('\n' + 'early stop' + '\n')
+                    print('\n' + 'Early Stop' + '\n')
                     break
-
-                print()
         
+        # Close Tensorboard Writer
         self.train_writer.close()
         self.val_writer.close()
 
@@ -238,85 +245,98 @@ class Training():
     """
     def training(self, epoch_index, train_dl):
         
-        # training state
+        # Model: Training State
         self.gen.train()
         self.dis.train() 
 
-        # create buffer for matrics
+        # Buffer for Metrics
         metrics = torch.zeros(METRICS, len(train_dl), device = self.device)
 
+        # Progress Bar
         space = "{:3}{:3}{:3}"
         progress = tqdm(enumerate(train_dl), total = len(train_dl), leave = True,
                         bar_format = '{l_bar}{bar:15}{r_bar}{bar:-10b}')
         for batch_index, batch_tuple in progress:
 
-            # get samples
+            """
+            ========================================================================================
+            Prepare Data
+            ========================================================================================
+            """
+            # Get MT and rCT
+            # real1: MR; real2: rCT
             (real1_t, real2_t) = batch_tuple
             real1_g = real1_t.to(self.device)
             real2_g = real2_t.to(self.device)
 
-            # save max & min
+            # Save Min and Max for Reconstruction
             self.max1 = real1_g.max()
             self.min1 = real1_g.min()
             self.max2 = real2_g.max()
             self.min2 = real2_g.min()
 
-            # normalization
-            real1_g = (real1_g - self.min1) / (self.max1 - self.min1 + 1e-6)
-            real2_g = (real2_g - self.min2) / (self.max2 - self.min2 + 1e-6)
+            # Min-Max Normalization
+            real1_g -= self.min1
+            real1_g /= self.max1 + 1e-6
+            real2_g -= self.min2
+            real2_g /= self.max2 + 1e-6
 
-            # ground truth
-            valid = torch.ones(real2_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
-            fake = torch.zeros(real2_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
+            # Ground Truth
+            valid = torch.ones(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
+            fake = torch.zeros(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
 
-            # get output of model
+            # Get sCT from Generator
+            # fake2: sCT
             fake2_g = self.gen(real1_g)
 
             """
             ========================================================================================
-            Train Generator
+            Generator
             ========================================================================================
             """
-            # refresh gradient
+            # Refresh Optimizer's Gradient
             self.optimizer_gen.zero_grad()
 
-            # get pixelwise loss
+            # Pixelwise Loss
             loss_pix = get_pix_loss(fake2_g, real2_g)
 
-            # get adversarial loss
-            loss_adv = get_adv_loss(self.dis(fake2_g, real1_g), valid)        
+            # Adversarial loss
+            loss_adv = get_adv_loss(self.dis(fake2_g, real1_g), valid)
 
-            # total loss
-            loss_gen = loss_pix + loss_adv
+            # Gradient Difference loss
+            loss_gdl = get_gdl_loss(fake2_g, real2_g)           
 
-            # update parameters
+            # Total Loss
+            loss_gen = loss_pix + loss_adv + loss_gdl
+
+            # Update Generator's Parameters
             loss_gen.backward()
             self.optimizer_gen.step()
 
             """
             ========================================================================================
-            Train Discriminator
+            Discriminator
             ========================================================================================
             """
-            # refresh gradient
+            # Refresh Optimizer's Gradient
             self.optimizer_dis.zero_grad()
 
-            # real loss
+            # Real Loss
             loss_real = get_adv_loss(self.dis(real2_g, real1_g), valid)
 
-            # fake loss
+            # Fake Loss
             loss_fake = get_adv_loss(self.dis(fake2_g.detach(), real1_g), fake)
 
-            # total loss
+            # Total Loss
             loss_dis = (loss_real + loss_fake) / 2
 
-            # update parameters
+            # Update Discriminator's Parameters
             loss_dis.backward()
             self.optimizer_dis.step()
 
             """
             ========================================================================================
-            Get and Save Metrics
+            Metrics
             ========================================================================================
             """
             # PSNR
@@ -331,6 +351,7 @@ class Training():
             metrics[METRICS_PSNR, batch_index] = psnr.item()
             metrics[METRICS_SSIM, batch_index] = ssim.item()
 
+            # Progress Bar Information
             progress.set_description('Epoch [' + space.format(epoch_index, ' / ', EPOCH) + ']')
             progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item())
 
@@ -345,71 +366,84 @@ class Training():
 
         with torch.no_grad():
 
-            # validation state
+            # Model: Validation State
             self.gen.eval()
             self.dis.eval() 
 
-            # create buffer for matrics
+            # Buffer for Metrics
             metrics = torch.zeros(METRICS, len(val_dl), device = self.device)
         
+            # Progress Bar
             space = "{:3}{:3}{:3}"
             progress = tqdm(enumerate(val_dl), total = len(val_dl), leave = True,
                             bar_format = '{l_bar}{bar:15}{r_bar}{bar:-10b}')
             for batch_index, batch_tuple in progress:
 
-                # get samples
+                """
+                ========================================================================================
+                Prepare Data
+                ========================================================================================
+                """
+                # Get MT and rCT
+                # real1: MR; real2: rCT
                 (real1_t, real2_t) = batch_tuple
                 real1_g = real1_t.to(self.device)
                 real2_g = real2_t.to(self.device)
 
-                # save max & min
+                # Save Min and Max for Reconstruction
                 self.max1 = real1_g.max()
                 self.min1 = real1_g.min()
                 self.max2 = real2_g.max()
                 self.min2 = real2_g.min()
 
-                # normalization
-                real1_g = (real1_g - self.min1) / (self.max1 - self.min1)
-                real2_g = (real2_g - self.min2) / (self.max2 - self.min2)
+                # Min-Max Normalization
+                real1_g -= self.min1
+                real1_g /= self.max1 + 1e-6
+                real2_g -= self.min2
+                real2_g /= self.max2 + 1e-6
 
-                # ground truth
-                valid = torch.ones(real2_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
-                fake = torch.zeros(real2_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
+                # Ground Truth
+                valid = torch.ones(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
+                fake = torch.zeros(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
 
-                # get output of model
+                # Get sCT from Generator
+                # fake2: sCT
                 fake2_g = self.gen(real1_g)
 
                 """
                 ========================================================================================
-                Validate Generator
+                Generator
                 ========================================================================================
                 """
-                # get pixelwise loss
+                # Pixelwise Loss
                 loss_pix = get_pix_loss(fake2_g, real2_g)
 
-                # get adversarial loss
+                # Adversarial loss
                 loss_adv = get_adv_loss(self.dis(fake2_g, real1_g), valid)        
 
-                # total loss
-                loss_gen = loss_pix + loss_adv
+                # Gradient Difference loss
+                loss_gdl = get_gdl_loss(fake2_g, real2_g)           
+
+                # Total Loss
+                loss_gen = loss_pix + loss_adv + loss_gdl
         
                 """
                 ========================================================================================
-                Validate Discriminator
+                Discriminator
                 ========================================================================================
                 """
-                # real loss
+                # Real Loss
                 loss_real2 = get_adv_loss(self.dis(real2_g, real1_g), valid)
 
-                # fake loss
+                # Fake Loss
                 loss_fake2 = get_adv_loss(self.dis(fake2_g.detach(), real1_g), fake)
 
-                # total loss
+                # Total Loss
                 loss_dis = (loss_real2 + loss_fake2) / 2
 
                 """
                 ========================================================================================
-                Get and Save Metrics
+                Metrics
                 ========================================================================================
                 """
                 # PSNR
@@ -423,7 +457,8 @@ class Training():
                 metrics[METRICS_DIS, batch_index] = loss_dis.item()
                 metrics[METRICS_PSNR, batch_index] = psnr.item()
                 metrics[METRICS_SSIM, batch_index] = ssim.item()
-
+                
+                # Progress Bar Information
                 progress.set_description('Epoch [' + space.format(epoch_index, ' / ', EPOCH) + ']')
                 progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item())
 
@@ -436,66 +471,76 @@ class Training():
     """ 
     def save_metrics(self, epoch_index, mode, metrics_t):
 
-        # copy metrics
+        # Torch Tensor to Numpy Array
         metrics_a = metrics_t.detach().numpy().mean(axis = 1)
 
-        # create a dictionary to save metrics
+        # Create Dictionary
         metrics_dict = {}
-        metrics_dict['Loss/Gen'] = metrics_a[METRICS_GEN]
-        metrics_dict['Loss/Dis'] = metrics_a[METRICS_DIS]
+        metrics_dict['Loss/Generator'] = metrics_a[METRICS_GEN]
+        metrics_dict['Loss/Discriminator'] = metrics_a[METRICS_DIS]
         metrics_dict['Metrics/PSNR'] = metrics_a[METRICS_PSNR]
         metrics_dict['Metrics/SSIM'] = metrics_a[METRICS_SSIM]
 
-        # save metrics to tensorboard writer
+        # Save Metrics
         writer = getattr(self, mode + '_writer')
         for key, value in metrics_dict.items():
-
+            
             writer.add_scalar(key, value.item(), epoch_index)
         
-        # refresh tensorboard writer
+        # Refresh Tensorboard Writer
         writer.flush()
 
-        return metrics_dict['Loss/Gen']
+        return metrics_dict['Loss/Generator']
 
     """
     ================================================================================================
-    Save Some Image to Checking
+    Save Image
     ================================================================================================
     """ 
     def save_images(self, epoch_index, mode, dataloader):
 
-        # validation state
+        # Model: Validation State
         self.gen.eval()
 
-        # get random image index and load sample
+        # Get MT and rCT
+        # real1: MR; real2: rCT
         (real1_t, real2_t) = dataloader.dataset[90]
         real1_g = real1_t.to(self.device).unsqueeze(0)
         real2_g = real2_t.to(self.device).unsqueeze(0)
 
-        # get predict
+        # Get sCT from Generator
+        # fake2: sCT
         fake2_g = self.gen(real1_g)
 
-        real1_a = real1_g.to('cpu').detach().numpy()[:, 3, :, :]
-        real2_a = real2_g.to('cpu').detach().numpy()[0]
-        fake2_a = fake2_g.to('cpu').detach().numpy()[0]
-        
-        real1_a -= real1_a.min()
-        real1_a /= real1_a.max()
-        
-        real2_a -= real2_a.min()
-        real2_a /= real2_a.max()
-        
-        print(real1_a.min(), real1_a.max())
-        print(real2_a.min(), real2_a.max())
-        print(fake2_a.min(), fake2_a.max())
+        # Min-Max Normalization
+        real1_g -= real1_g.min()
+        real1_g /= real1_g.max() + 1e-6
+        real2_g -= real2_g.min()
+        real2_g /= real2_g.max() + 1e-6
 
-        # save image to tensorboard writer
+        # Torch Tensor to Numpy Array
+        real1_a = real1_g.to('cpu').detach().numpy()[:, 3, :, :]
+        real2_a = real2_g.to('cpu').detach().numpy()[0, :, :, :]
+        fake2_a = fake2_g.to('cpu').detach().numpy()[0, :, :, :]
+        
+        # Color Map: Cool-Warm
+        colormap = plt.get_cmap('coolwarm')
+
+        # Difference Map
+        diff = np.abs(real2_a - fake2_a)
+        diff -= diff.min()
+        diff /= diff.max()
+        diff = colormap(diff[0])
+        diff = diff[..., :3]
+
+        # Save Image
         writer = getattr(self, mode + '_writer')
         writer.add_image(mode + '/MR', real1_a, epoch_index, dataformats = 'CHW')
         writer.add_image(mode + '/rCT', real2_a, epoch_index, dataformats = 'CHW')
         writer.add_image(mode + '/sCT', fake2_a, epoch_index, dataformats = 'CHW')
+        writer.add_image(mode + '/Diff', diff, epoch_index, dataformats = 'HWC')
 
-        # refresh tensorboard writer
+        # Refresh Tensorboard Writer
         writer.flush()
 
     """
@@ -505,34 +550,28 @@ class Training():
     """ 
     def save_model(self, epoch_index, score, is_best):
 
-        # prepare model state dict
-        gen = self.gen
-        dis = self.dis
-
-        opt_gen = self.optimizer_gen
-        opt_dis = self.optimizer_dis
-
+        # Time, Model State, Optimizer State
+        # Ending Epoch, Best Score
         state = {
             'time': self.time,
-            'gen_state': gen.state_dict(),
-            'gen_name': type(gen).__name__,
-            'dis_state': dis.state_dict(),
-            'dis_name': type(dis).__name__,
-            'optimizer_gen_state': opt_gen.state_dict(),
-            'optimizer_gen_name': type(opt_gen).__name__,
-            'optimizer_dis_state': opt_dis.state_dict(),
-            'optimizer_dis_name': type(opt_dis).__name__,
+            'gen_state': self.gen.state_dict(),
+            'gen_name': type(self.gen).__name__,
+            'dis_state': self.dis.state_dict(),
+            'dis_name': type(self.dis).__name__,
+            'optimizer_gen_state': self.optimizer_gen.state_dict(),
+            'optimizer_gen_name': type(self.optimizer_gen).__name__,
+            'optimizer_dis_state': self.optimizer_dis.state_dict(),
+            'optimizer_dis_name': type(self.optimizer_dis).__name__,
             'epoch': epoch_index,
             'score': score,
         }
 
-        # save model
+        # Save Model
         model_path = os.path.join(RESULTS_PATH, 'Model', self.time + '.pt')
         torch.save(state, model_path)
 
+        # Save Best Model
         if is_best:
-
-            # save best model
             best_path = os.path.join(RESULTS_PATH, 'Model', self.time + '.best.pt')
             torch.save(state, best_path)
 

@@ -20,11 +20,11 @@ class Res(nn.Module):
 
         super().__init__()
 
-        # (normalization -> activation -> convolution) * 2
-        self.res_block = nn.Sequential(nn.BatchNorm2d(num_features = filters), 
+        # (Normalization -> Activation -> Convolution) * 2
+        self.res_block = nn.Sequential(nn.BatchNorm2d(filters), 
                                        nn.LeakyReLU(0.01),
                                        nn.Conv2d(filters, filters, kernel_size = 3, padding = 1, bias = False),
-                                       nn.BatchNorm2d(num_features = filters),
+                                       nn.BatchNorm2d(filters),
                                        nn.LeakyReLU(0.01),
                                        nn.Conv2d(filters, filters, kernel_size = 3, padding = 1, bias = False))
 
@@ -32,7 +32,7 @@ class Res(nn.Module):
 
         img_out = self.res_block(img_in)
 
-        # jump connection
+        # Jump Connection
         return img_in + img_out
 
 
@@ -47,7 +47,7 @@ class Init(nn.Module):
 
         super().__init__()
 
-        # convolution -> dropout -> res block
+        # Convolution -> Dropout -> Residual Block
         self.conv = nn.Conv2d(slice, filters, kernel_size = 3, padding = 1, bias = False)
         self.drop = nn.Dropout2d(0.2)
         self.res = Res(filters)
@@ -72,7 +72,7 @@ class Down(nn.Module):
 
         super().__init__()
 
-        # downsampling -> resblock
+        # Downsampling -> Residual Block
         self.down = nn.Conv2d(filters // 2, filters, kernel_size = 3, stride = 2, padding = 1, bias = False)
         self.res = Res(filters)
 
@@ -95,18 +95,19 @@ class Mid(nn.Module):
 
         super().__init__()
 
-        self.bottle_block = nn.Sequential(nn.BatchNorm2d(num_features = filters),
+        # Normalization -> Activation -> Convolution -> Dropout -> Normalization -> Convolution
+        self.bottle_block = nn.Sequential(nn.BatchNorm2d(filters),
                                           nn.LeakyReLU(0.01),
                                           nn.Conv2d(filters, filters, kernel_size = 3, padding = 1, bias = False),
                                           nn.Dropout2d(0.5),
-                                          nn.BatchNorm2d(num_features = filters),
+                                          nn.BatchNorm2d(filters),
                                           nn.Conv2d(filters, filters, kernel_size = 3, padding = 1, bias = False))
     
     def forward(self, img_in):
 
         img_out = self.bottle_block(img_in)
 
-        # jump connection
+        # Jump Connection
         return img_in + img_out
 
 
@@ -122,7 +123,7 @@ class Up(nn.Module):
 
         super().__init__()
 
-        # convolution -> upsampling -> res block
+        # Convolution -> Upsampling -> Residual Block
         self.conv = nn.Conv2d(filters * 2, filters, kernel_size = 1, padding = 0, bias = False)
         self.up = nn.ConvTranspose2d(filters, filters, kernel_size = 2, stride = 2, bias = False)
         self.res = Res(filters)
@@ -131,7 +132,8 @@ class Up(nn.Module):
 
         img_out = self.conv(img_in_1)
         img_out = self.up(img_out)
-        # jump connection
+
+        # Jump Connection
         img_out += img_in_2
         img_out = self.res(img_out)
 
@@ -169,19 +171,20 @@ class Unet(nn.Module):
     def __init__(self, slice = 7):
 
         super().__init__()
-        # number of filters
+
+        # Number of Filters
         self.filters = [16, 32, 64, 128, 256]
 
-        # initialization
+        # Initialization
         self.init = Init(slice, self.filters[0])
 
-        # downsampling
+        # Downsampling
         self.down_1 = Down(self.filters[1])
         self.down_2 = Down(self.filters[2])
         self.down_3 = Down(self.filters[3])
         self.down_4 = Down(self.filters[4])
 
-        # bottleneck
+        # Bottleneck
         self.mid_1 = Mid(self.filters[4])
         self.mid_2 = Mid(self.filters[4])
         self.mid_3 = Mid(self.filters[4])
@@ -192,27 +195,27 @@ class Unet(nn.Module):
         self.mid_8 = Mid(self.filters[4])
         self.mid_9 = Mid(self.filters[4])
         
-        # upsampling
+        # Upsampling
         self.up_4 = Up(self.filters[3])
         self.up_3 = Up(self.filters[2])
         self.up_2 = Up(self.filters[1])
         self.up_1 = Up(self.filters[0])
 
-        # ouput
+        # Ouput
         self.final = Final(self.filters[0])
     
     def forward(self, img_in):
         
-        # initialization
+        # Initialization
         init = self.init(img_in)
 
-        # downsampling
+        # Downsampling
         down_1 = self.down_1(init)
         down_2 = self.down_2(down_1)
         down_3 = self.down_3(down_2)
         down_4 = self.down_4(down_3)
 
-        # bottleneck
+        # Bottleneck
         mid = self.mid_1(down_4)
         mid = self.mid_2(mid)
         mid = self.mid_3(mid)
@@ -223,13 +226,13 @@ class Unet(nn.Module):
         mid = self.mid_8(mid)
         mid = self.mid_9(mid)
 
-        # upsampling
+        # Upsampling
         up_4 = self.up_4(mid, down_3)
         up_3 = self.up_3(up_4, down_2)
         up_2 = self.up_2(up_3, down_1)
         up_1 = self.up_1(up_2, init)
 
-        # ouput
+        # Ouput
         img_out = self.final(up_1)
 
         return img_out
