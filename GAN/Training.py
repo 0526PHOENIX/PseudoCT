@@ -28,7 +28,7 @@ Global Constant
 """
 MAX = 10000000
 STRIDE = 5
-BATCH = 32
+BATCH = 128
 EPOCH = 10
 
 METRICS = 5
@@ -446,7 +446,7 @@ class Training():
                 ========================================================================================
                 """
                 # Real Loss
-                loss_real2 = get_adv_loss(self.dis(fake2_g, real2_g), valid)
+                loss_real2 = get_adv_loss(self.dis(real1_g[:, 3:4, :, :], real2_g), valid)
 
                 # Fake Loss
                 loss_fake2 = get_adv_loss(self.dis(fake2_g.detach(), real1_g[:, 3:4, :, :]), fake)
