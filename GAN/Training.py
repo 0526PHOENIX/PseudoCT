@@ -28,7 +28,7 @@ Global Constant
 """
 MAX = 10000000
 STRIDE = 5
-BATCH = 128
+BATCH = 64
 EPOCH = 60
 
 METRICS = 5
@@ -93,8 +93,8 @@ class Training():
         print('\n' + 'Model Initialized' + '\n')
         
         # Optimizer: Adam
-        self.optimizer_gen = Adam(self.gen.parameters())
-        self.optimizer_dis = Adam(self.dis.parameters())
+        self.optimizer_gen = Adam(self.gen.parameters(), lr = 1e-5)
+        self.optimizer_dis = Adam(self.dis.parameters(), lr = 1e-5)
 
         print('\n' + 'Optimizer Initialized' + '\n')
 
@@ -123,11 +123,11 @@ class Training():
 
         # Training
         train_ds = Training_2D(root = DATA_PATH, is_val = False, val_stride = STRIDE)
-        train_dl = DataLoader(train_ds, batch_size = BATCH, drop_last = False)
+        train_dl = DataLoader(train_ds, batch_size = BATCH, shuffle = True, drop_last = False)
 
         # Validation
         val_ds = Training_2D(root = DATA_PATH, is_val = True, val_stride = STRIDE)
-        val_dl = DataLoader(val_ds, batch_size = BATCH, drop_last = False)
+        val_dl = DataLoader(val_ds, batch_size = BATCH, shuffle = True, drop_last = False)
 
         return train_dl, val_dl
     

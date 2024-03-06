@@ -44,11 +44,6 @@ class Training_2D(Dataset):
             del self.images[::val_stride]
             del self.labels[::val_stride]
 
-        # Shuffle Data
-        samples = list(zip(self.images, self.labels))
-        random.shuffle(samples)
-        (self.images, self.labels) = zip(*samples)
-
         # Check Data Quantity
         if len(self.images) != len(self.labels):
             raise ValueError('Unequal amount of images and labels.')
@@ -105,11 +100,6 @@ class Testing_2D(Dataset):
         self.labels = []
         for series in sorted(os.listdir(self.labels_path)):
             self.labels.append(os.path.join(self.labels_path, series))
-
-        # Shuffle Data
-        samples = list(zip(self.images, self.labels))
-        random.shuffle(samples)
-        (self.images, self.labels) = zip(*samples)
 
         # Check Data Quantity
         if len(self.images) != len(self.labels):
