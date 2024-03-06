@@ -8,14 +8,14 @@ import torch
 import torch.nn.functional as F
 
 
-MR_RAW = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Raw\\Train\\MR"
-CT_RAW = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Raw\\Train\\CT"
+MR_RAW = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Raw\\Test\\MR"
+CT_RAW = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Raw\\Test\\CT"
 
-MR = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data\\Train\\MR"
-CT = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data\\Train\\CT"
+MR = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data\\Test\\MR"
+CT = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data\\Test\\CT"
 
-MR_NII = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Nifti\\Train\\MR"
-CT_NII = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Nifti\\Train\\CT"
+MR_NII = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Nifti\\Test\\MR"
+CT_NII = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Nifti\\Test\\CT"
 
 
 images = os.listdir(MR_RAW)

@@ -17,7 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from GAN import Generator, Discriminator
 from Loss import get_adv_loss, get_pix_loss, get_gdl_loss
-from Loss import get_psnr, get_ssim
+from Loss import get_mae, get_psnr, get_ssim
 from Dataset import Training_2D
 
 
@@ -31,12 +31,21 @@ STRIDE = 5
 BATCH = 32
 EPOCH = 10
 
-METRICS = 4
+METRICS = 5
 METRICS_GEN = 0
 METRICS_DIS = 1
-METRICS_PSNR = 2
-METRICS_SSIM = 3
+METRICS_MAE = 2
+METRICS_PSNR = 3
+METRICS_SSIM = 4
 
+LAMBDA_1 = 1
+LAMBDA_2 = 30
+LAMBDA_3 = 10
+
+"""
+C:/Users/PHOENIX/Desktop/
+/home/ccy/
+"""
 DATA_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/Fake/Train"
 MODEL_PATH = ""
 RESULTS_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/GAN/Result"
@@ -210,7 +219,7 @@ class Training():
                 ====================================================================================
                 """
                 # Get Validation Metrics
-                print('============================================================')
+                print('===========================================================================')
                 print('Validation: ')
                 metrics_val = self.validation(epoch_index, val_dl)
 
@@ -223,7 +232,7 @@ class Training():
                     best_score = min(best_score, score)
                 self.save_model(epoch_index, score, (best_score == score))
 
-                print('============================================================')
+                print('===========================================================================')
 
                 # Early Stop
                 if score == best_score:
@@ -282,8 +291,8 @@ class Training():
             real2_g /= self.max2 + 1e-6
 
             # Ground Truth
-            valid = torch.ones(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
-            fake = torch.zeros(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
+            valid = torch.ones(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
+            fake = torch.zeros(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
 
             # Get sCT from Generator
             # fake2: sCT
@@ -297,17 +306,17 @@ class Training():
             # Refresh Optimizer's Gradient
             self.optimizer_gen.zero_grad()
 
+            # Adversarial loss
+            loss_adv = get_adv_loss(self.dis(fake2_g, real2_g), valid)
+
             # Pixelwise Loss
             loss_pix = get_pix_loss(fake2_g, real2_g)
-
-            # Adversarial loss
-            loss_adv = get_adv_loss(self.dis(fake2_g, real1_g), valid)
 
             # Gradient Difference loss
             loss_gdl = get_gdl_loss(fake2_g, real2_g)           
 
             # Total Loss
-            loss_gen = loss_pix + loss_adv + loss_gdl
+            loss_gen = LAMBDA_1 * loss_adv + LAMBDA_2 * loss_pix + LAMBDA_3 * loss_gdl
 
             # Update Generator's Parameters
             loss_gen.backward()
@@ -322,10 +331,10 @@ class Training():
             self.optimizer_dis.zero_grad()
 
             # Real Loss
-            loss_real = get_adv_loss(self.dis(real2_g, real1_g), valid)
+            loss_real = get_adv_loss(self.dis(real1_g[:, 3:4, :, :], real2_g), valid)
 
             # Fake Loss
-            loss_fake = get_adv_loss(self.dis(fake2_g.detach(), real1_g), fake)
+            loss_fake = get_adv_loss(self.dis(fake2_g.detach(), real1_g[:, 3:4, :, :]), fake)
 
             # Total Loss
             loss_dis = (loss_real + loss_fake) / 2
@@ -339,6 +348,9 @@ class Training():
             Metrics
             ========================================================================================
             """
+            # MAE
+            mae = get_mae(fake2_g, real2_g)
+
             # PSNR
             psnr = get_psnr(fake2_g, real2_g)
 
@@ -348,12 +360,13 @@ class Training():
             # Save Metrics
             metrics[METRICS_GEN, batch_index] = loss_gen.item()
             metrics[METRICS_DIS, batch_index] = loss_dis.item()
+            metrics[METRICS_MAE, batch_index] = mae.item()
             metrics[METRICS_PSNR, batch_index] = psnr.item()
             metrics[METRICS_SSIM, batch_index] = ssim.item()
 
             # Progress Bar Information
             progress.set_description('Epoch [' + space.format(epoch_index, ' / ', EPOCH) + ']')
-            progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item())
+            progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae.item())
 
         return metrics.to('cpu')
 
@@ -403,8 +416,8 @@ class Training():
                 real2_g /= self.max2 + 1e-6
 
                 # Ground Truth
-                valid = torch.ones(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
-                fake = torch.zeros(BATCH, 1, 12, 12, requires_grad = False, device = self.device)
+                valid = torch.ones(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
+                fake = torch.zeros(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
 
                 # Get sCT from Generator
                 # fake2: sCT
@@ -415,17 +428,17 @@ class Training():
                 Generator
                 ========================================================================================
                 """
-                # Pixelwise Loss
-                loss_pix = get_pix_loss(fake2_g, real2_g)
-
                 # Adversarial loss
-                loss_adv = get_adv_loss(self.dis(fake2_g, real1_g), valid)        
+                loss_adv = get_adv_loss(self.dis(fake2_g, real2_g), valid)  
+
+                # Pixelwise Loss
+                loss_pix = get_pix_loss(fake2_g, real2_g)      
 
                 # Gradient Difference loss
                 loss_gdl = get_gdl_loss(fake2_g, real2_g)           
 
                 # Total Loss
-                loss_gen = loss_pix + loss_adv + loss_gdl
+                loss_gen = LAMBDA_1 * loss_adv + LAMBDA_2 * loss_pix + LAMBDA_3 * loss_gdl
         
                 """
                 ========================================================================================
@@ -433,10 +446,10 @@ class Training():
                 ========================================================================================
                 """
                 # Real Loss
-                loss_real2 = get_adv_loss(self.dis(real2_g, real1_g), valid)
+                loss_real2 = get_adv_loss(self.dis(fake2_g, real2_g), valid)
 
                 # Fake Loss
-                loss_fake2 = get_adv_loss(self.dis(fake2_g.detach(), real1_g), fake)
+                loss_fake2 = get_adv_loss(self.dis(fake2_g.detach(), real1_g[:, 3:4, :, :]), fake)
 
                 # Total Loss
                 loss_dis = (loss_real2 + loss_fake2) / 2
@@ -446,6 +459,9 @@ class Training():
                 Metrics
                 ========================================================================================
                 """
+                # MAE
+                mae = get_mae(fake2_g, real2_g)
+
                 # PSNR
                 psnr = get_psnr(fake2_g, real2_g)
 
@@ -455,12 +471,13 @@ class Training():
                 # Save Metrics
                 metrics[METRICS_GEN, batch_index] = loss_gen.item()
                 metrics[METRICS_DIS, batch_index] = loss_dis.item()
+                metrics[METRICS_MAE, batch_index] = mae.item()
                 metrics[METRICS_PSNR, batch_index] = psnr.item()
                 metrics[METRICS_SSIM, batch_index] = ssim.item()
                 
                 # Progress Bar Information
                 progress.set_description('Epoch [' + space.format(epoch_index, ' / ', EPOCH) + ']')
-                progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item())
+                progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae.item())
 
             return metrics.to('cpu')
     
@@ -478,6 +495,7 @@ class Training():
         metrics_dict = {}
         metrics_dict['Loss/Generator'] = metrics_a[METRICS_GEN]
         metrics_dict['Loss/Discriminator'] = metrics_a[METRICS_DIS]
+        metrics_dict['Metrics/MAE'] = metrics_a[METRICS_MAE]
         metrics_dict['Metrics/PSNR'] = metrics_a[METRICS_PSNR]
         metrics_dict['Metrics/SSIM'] = metrics_a[METRICS_SSIM]
 

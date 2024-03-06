@@ -34,7 +34,7 @@ class Init(nn.Module):
 
         super().__init__()
 
-        self.init_block = nn.Sequential(nn.Conv2d(8, filters, kernel_size = 4, stride = 2, padding = 1),
+        self.init_block = nn.Sequential(nn.Conv2d(2, filters, kernel_size = 4, stride = 2, padding = 1),
                                         nn.LeakyReLU(0.01))
 
     def forward(self, img_in):
