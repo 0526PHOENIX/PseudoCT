@@ -29,7 +29,7 @@ Global Constant
 MAX = 10000000
 STRIDE = 5
 BATCH = 64
-EPOCH = 60
+EPOCH = 10
 
 METRICS = 5
 METRICS_GEN = 0
@@ -46,8 +46,8 @@ LAMBDA_3 = 10
 C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
-DATA_PATH = "/home/ccy/PseudoCT/Fake/Train"
-MODEL_PATH = "/home/ccy/PseudoCT/GAN/Result/Model/2024-03-06_15-59.pt"
+DATA_PATH = "/home/ccy/PseudoCT/Data/Train"
+MODEL_PATH = ""
 RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
 
