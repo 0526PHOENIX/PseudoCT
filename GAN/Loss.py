@@ -61,7 +61,7 @@ MAE: L1 Loss
 """
 def get_mae(predicts, labels):
 
-    return L1Loss().to(device)(predicts, labels)
+    return L1Loss().to(device)(predicts, labels).item()
 
 
 """
@@ -71,7 +71,7 @@ PSNR
 """
 def get_psnr(predicts, labels):
 
-    return PeakSignalNoiseRatio().to(device)(predicts, labels)
+    return PeakSignalNoiseRatio().to(device)(predicts, labels).item()
 
 
 """
@@ -81,7 +81,7 @@ SSIM
 """
 def get_ssim(predicts, labels):
 
-    return StructuralSimilarityIndexMeasure().to(device)(predicts, labels)
+    return StructuralSimilarityIndexMeasure().to(device)(predicts, labels).item()
 
 """
 ====================================================================================================
@@ -102,8 +102,11 @@ if __name__ == '__main__':
     gdl = get_gdl_loss(image, label)
     print(gdl, gdl.size())
 
+    mae = get_mae(image, label)
+    print(mae)
+
     psnr = get_psnr(image, label)
-    print(psnr, psnr.size())
+    print(psnr)
 
     ssim = get_ssim(image, label)
-    print(ssim, ssim.size())
+    print(ssim)

@@ -46,7 +46,7 @@ LAMBDA_3 = 10
 C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
-DATA_PATH = "/home/ccy/PseudoCT/Data/Train"
+DATA_PATH = "/home/ccy/PseudoCT/Fake/Train"
 MODEL_PATH = ""
 RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
@@ -285,10 +285,8 @@ class Training():
             self.min2 = real2_g.min()
 
             # Min-Max Normalization
-            real1_g -= self.min1
-            real1_g /= self.max1 + 1e-6
-            real2_g -= self.min2
-            real2_g /= self.max2 + 1e-6
+            real1_g = (real1_g - self.min1) / (self.max1 - self.min1 + 1e-6)
+            real2_g = (real2_g - self.min2) / (self.max2 - self.min2 + 1e-6)
 
             # Ground Truth
             valid = torch.ones(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
@@ -360,13 +358,13 @@ class Training():
             # Save Metrics
             metrics[METRICS_GEN, batch_index] = loss_gen.item()
             metrics[METRICS_DIS, batch_index] = loss_dis.item()
-            metrics[METRICS_MAE, batch_index] = mae.item()
-            metrics[METRICS_PSNR, batch_index] = psnr.item()
-            metrics[METRICS_SSIM, batch_index] = ssim.item()
+            metrics[METRICS_MAE, batch_index] = mae
+            metrics[METRICS_PSNR, batch_index] = psnr
+            metrics[METRICS_SSIM, batch_index] = ssim
 
             # Progress Bar Information
             progress.set_description('Epoch [' + space.format(epoch_index, ' / ', EPOCH) + ']')
-            progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae.item())
+            progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae)
 
         return metrics.to('cpu')
 
@@ -410,10 +408,8 @@ class Training():
                 self.min2 = real2_g.min()
 
                 # Min-Max Normalization
-                real1_g -= self.min1
-                real1_g /= self.max1 + 1e-6
-                real2_g -= self.min2
-                real2_g /= self.max2 + 1e-6
+                real1_g = (real1_g - self.min1) / (self.max1 - self.min1 + 1e-6)
+                real2_g = (real2_g - self.min2) / (self.max2 - self.min2 + 1e-6)
 
                 # Ground Truth
                 valid = torch.ones(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
@@ -471,13 +467,13 @@ class Training():
                 # Save Metrics
                 metrics[METRICS_GEN, batch_index] = loss_gen.item()
                 metrics[METRICS_DIS, batch_index] = loss_dis.item()
-                metrics[METRICS_MAE, batch_index] = mae.item()
-                metrics[METRICS_PSNR, batch_index] = psnr.item()
-                metrics[METRICS_SSIM, batch_index] = ssim.item()
+                metrics[METRICS_MAE, batch_index] = mae
+                metrics[METRICS_PSNR, batch_index] = psnr
+                metrics[METRICS_SSIM, batch_index] = ssim
                 
                 # Progress Bar Information
                 progress.set_description('Epoch [' + space.format(epoch_index, ' / ', EPOCH) + ']')
-                progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae.item())
+                progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae)
 
             return metrics.to('cpu')
     
@@ -526,15 +522,15 @@ class Training():
         real1_g = real1_t.to(self.device).unsqueeze(0)
         real2_g = real2_t.to(self.device).unsqueeze(0)
 
-        # Get sCT from Generator
-        # fake2: sCT
-        fake2_g = self.gen(real1_g)
-
         # Min-Max Normalization
         real1_g -= real1_g.min()
         real1_g /= real1_g.max() + 1e-6
         real2_g -= real2_g.min()
         real2_g /= real2_g.max() + 1e-6
+
+        # Get sCT from Generator
+        # fake2: sCT
+        fake2_g = self.gen(real1_g)
 
         # Torch Tensor to Numpy Array
         real1_a = real1_g.to('cpu').detach().numpy()[:, 3, :, :]
