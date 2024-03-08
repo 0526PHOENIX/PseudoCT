@@ -489,9 +489,10 @@ class Training():
 
         path = os.path.join(RESULTS_PATH, 'Metrics', self.time, 'Hyper.txt')
 
-        if  not os.path.isfile(path):
+        if not os.path.isfile(path):
 
-            with open(path, 'w') as f:
+
+            with open(path, 'a') as f:
 
                 print('Model:', 'Pix2Pix', file = f)
                 print('Batch Size:', BATCH, file = f)
