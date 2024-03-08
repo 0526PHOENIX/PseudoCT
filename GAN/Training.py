@@ -533,7 +533,7 @@ class Training():
         fake2_g = self.gen(real1_g)
 
         # Torch Tensor to Numpy Array
-        real1_a = real1_g.to('cpu').detach().numpy()[:, 3, :, :]
+        real1_a = real1_g.to('cpu').detach().numpy()[0, 3:4, :, :]
         real2_a = real2_g.to('cpu').detach().numpy()[0, :, :, :]
         fake2_a = fake2_g.to('cpu').detach().numpy()[0, :, :, :]
         
