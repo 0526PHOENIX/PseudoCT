@@ -114,8 +114,8 @@ class Training():
         log_dir = os.path.join(RESULTS_PATH, 'Metrics', self.time)
 
         # Tensorboard Writer
-        self.train_writer = SummaryWriter(log_dir + '/train')
-        self.val_writer = SummaryWriter(log_dir + '/val')
+        self.train_writer = SummaryWriter(log_dir + '/Train')
+        self.val_writer = SummaryWriter(log_dir + '/Val')
 
         print('\n' + 'TensorBoard Initialized' + '\n')
 
@@ -173,8 +173,8 @@ class Training():
 
             # Tensorboard Writer
             log_dir = os.path.join(RESULTS_PATH, 'Metrics', checkpoint['time'])
-            self.train_writer = SummaryWriter(log_dir + '/train')
-            self.val_writer = SummaryWriter(log_dir + '/val')
+            self.train_writer = SummaryWriter(log_dir + '/Train')
+            self.val_writer = SummaryWriter(log_dir + '/Val')
 
             return checkpoint['score']
         
