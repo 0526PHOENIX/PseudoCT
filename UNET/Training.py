@@ -15,8 +15,8 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from GAN import Generator, Discriminator
-from Loss import get_adv_loss, get_pix_loss, get_gdl_loss
+from Unet import Unet
+from Loss import get_pix_loss, get_gdl_loss
 from Loss import get_mae, get_psnr, get_ssim
 from Dataset import Training_2D
 
@@ -30,27 +30,24 @@ MAX = 10000000
 STRIDE = 5
 BATCH = 64
 EPOCH = 30
-LR_GEN = 1e-4
-LR_DIS = 1e-4
+LR = 1e-4
 
-METRICS = 5
-METRICS_GEN = 0
-METRICS_DIS = 1
-METRICS_MAE = 2
-METRICS_PSNR = 3
-METRICS_SSIM = 4
+METRICS = 4
+METRICS_LOSS = 0
+METRICS_MAE = 1
+METRICS_PSNR = 2
+METRICS_SSIM = 3
 
-LAMBDA_1 = 1
-LAMBDA_2 = 30
-LAMBDA_3 = 10
+LAMBDA_1 = 3
+LAMBDA_2 = 1
 
 """
 C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
-DATA_PATH = "/home/ccy/PseudoCT/Data/Train"
+DATA_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/Fake/Train"
 MODEL_PATH = ""
-RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
+RESULTS_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/UNET/Result"
 
 
 """
@@ -88,15 +85,13 @@ class Training():
     """
     def initialization(self):
 
-        # Model: Generator and Discriminator
-        self.gen = Generator().to(self.device)
-        self.dis = Discriminator().to(self.device)
+        # Model: Unet
+        self.model = Unet().to(self.device)\
 
         print('\n' + 'Model Initialized' + '\n')
         
         # Optimizer: Adam
-        self.optimizer_gen = Adam(self.gen.parameters(), lr = LR_GEN)
-        self.optimizer_dis = Adam(self.dis.parameters(), lr = LR_DIS)
+        self.opt = Adam(self.model.parameters(), lr = LR)
 
         print('\n' + 'Optimizer Initialized' + '\n')
 
@@ -148,13 +143,11 @@ class Training():
             print('\n' + 'Checkpoint Loaded' + '\n')
 
             # Model: Generator and Discriminator
-            self.gen.load_state_dict(checkpoint['gen_state'])
-            self.dis.load_state_dict(checkpoint['dis_state'])
+            self.model.load_state_dict(checkpoint['model_state'])
             print('\n' + 'Model Loaded' + '\n')
             
             # Optimizer: Adam
-            self.optimizer_gen.load_state_dict(checkpoint['optimizer_gen_state'])
-            self.optimizer_dis.load_state_dict(checkpoint['optimizer_dis_state'])
+            self.opt.load_state_dict(checkpoint['opt_state'])
             print('\n' + 'Optimizer Loaded' + '\n')
 
             # Training Timestamp
@@ -257,8 +250,7 @@ class Training():
     def training(self, epoch_index, train_dl):
         
         # Model: Training State
-        self.gen.train()
-        self.dis.train() 
+        self.model.train()
 
         # Buffer for Metrics
         metrics = torch.zeros(METRICS, len(train_dl), device = self.device)
@@ -296,7 +288,7 @@ class Training():
 
             # Get sCT from Generator
             # fake2: sCT
-            fake2_g = self.gen(real1_g)
+            fake2_g = self.model(real1_g)
 
             """
             ========================================================================================
@@ -304,10 +296,7 @@ class Training():
             ========================================================================================
             """
             # Refresh Optimizer's Gradient
-            self.optimizer_gen.zero_grad()
-
-            # Adversarial loss
-            loss_adv = get_adv_loss(self.dis(fake2_g, real2_g), valid)
+            self.opt.zero_grad()
 
             # Pixelwise Loss
             loss_pix = get_pix_loss(fake2_g, real2_g)
@@ -316,32 +305,12 @@ class Training():
             loss_gdl = get_gdl_loss(fake2_g, real2_g)           
 
             # Total Loss
-            loss_gen = LAMBDA_1 * loss_adv + LAMBDA_2 * loss_pix + LAMBDA_3 * loss_gdl
+            loss = LAMBDA_1 * loss_pix + LAMBDA_2 * loss_gdl
 
             # Update Generator's Parameters
-            loss_gen.backward()
-            self.optimizer_gen.step()
+            loss.backward()
+            self.opt.step()
 
-            """
-            ========================================================================================
-            Discriminator
-            ========================================================================================
-            """
-            # Refresh Optimizer's Gradient
-            self.optimizer_dis.zero_grad()
-
-            # Real Loss
-            loss_real = get_adv_loss(self.dis(real1_g[:, 3:4, :, :], real2_g), valid)
-
-            # Fake Loss
-            loss_fake = get_adv_loss(self.dis(fake2_g.detach(), real1_g[:, 3:4, :, :]), fake)
-
-            # Total Loss
-            loss_dis = (loss_real + loss_fake) / 2
-
-            # Update Discriminator's Parameters
-            loss_dis.backward()
-            self.optimizer_dis.step()
 
             """
             ========================================================================================
@@ -358,15 +327,14 @@ class Training():
             ssim = get_ssim(fake2_g, real2_g)
 
             # Save Metrics
-            metrics[METRICS_GEN, batch_index] = loss_gen.item()
-            metrics[METRICS_DIS, batch_index] = loss_dis.item()
+            metrics[METRICS_LOSS, batch_index] = loss.item()
             metrics[METRICS_MAE, batch_index] = mae
             metrics[METRICS_PSNR, batch_index] = psnr
             metrics[METRICS_SSIM, batch_index] = ssim
 
             # Progress Bar Information
             progress.set_description('Epoch [' + space.format(epoch_index, ' / ', EPOCH) + ']')
-            progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae)
+            progress.set_postfix(loss = loss.item(), mae = mae)
 
         return metrics.to('cpu')
 
@@ -380,8 +348,7 @@ class Training():
         with torch.no_grad():
 
             # Model: Validation State
-            self.gen.eval()
-            self.dis.eval() 
+            self.model.eval() 
 
             # Buffer for Metrics
             metrics = torch.zeros(METRICS, len(val_dl), device = self.device)
@@ -419,16 +386,13 @@ class Training():
 
                 # Get sCT from Generator
                 # fake2: sCT
-                fake2_g = self.gen(real1_g)
+                fake2_g = self.model(real1_g)
 
                 """
                 ========================================================================================
                 Generator
                 ========================================================================================
                 """
-                # Adversarial loss
-                loss_adv = get_adv_loss(self.dis(fake2_g, real2_g), valid)  
-
                 # Pixelwise Loss
                 loss_pix = get_pix_loss(fake2_g, real2_g)      
 
@@ -436,21 +400,7 @@ class Training():
                 loss_gdl = get_gdl_loss(fake2_g, real2_g)           
 
                 # Total Loss
-                loss_gen = LAMBDA_1 * loss_adv + LAMBDA_2 * loss_pix + LAMBDA_3 * loss_gdl
-        
-                """
-                ========================================================================================
-                Discriminator
-                ========================================================================================
-                """
-                # Real Loss
-                loss_real = get_adv_loss(self.dis(real1_g[:, 3:4, :, :], real2_g), valid)
-
-                # Fake Loss
-                loss_fake = get_adv_loss(self.dis(fake2_g.detach(), real1_g[:, 3:4, :, :]), fake)
-
-                # Total Loss
-                loss_dis = (loss_real + loss_fake) / 2
+                loss = LAMBDA_1 * loss_pix + LAMBDA_2 * loss_gdl
 
                 """
                 ========================================================================================
@@ -467,39 +417,17 @@ class Training():
                 ssim = get_ssim(fake2_g, real2_g)
 
                 # Save Metrics
-                metrics[METRICS_GEN, batch_index] = loss_gen.item()
-                metrics[METRICS_DIS, batch_index] = loss_dis.item()
+                metrics[METRICS_LOSS, batch_index] = loss.item()
                 metrics[METRICS_MAE, batch_index] = mae
                 metrics[METRICS_PSNR, batch_index] = psnr
                 metrics[METRICS_SSIM, batch_index] = ssim
                 
                 # Progress Bar Information
                 progress.set_description('Epoch [' + space.format(epoch_index, ' / ', EPOCH) + ']')
-                progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae)
+                progress.set_postfix(loss = loss.item(), mae = mae)
 
             return metrics.to('cpu')
     
-    """
-    Save Hyperparameter: Batch Size, Epoch, Learning Rate
-    """
-    def save_hyper(self):
-
-        path = os.path.join(RESULTS_PATH, 'Metrics', self.time + 'Hyper.txt')
-
-        if  not os.path.isfile(path):
-
-            with open(path, 'w') as f:
-
-                print('Model:', 'Pix2Pix', file = f)
-                print('Batch Size:', BATCH, file = f)
-                print('Epoch:', EPOCH, file = f)
-                print('Gen Learning Rate:', LR_GEN, file = f)
-                print('Dis Learning Rate:', LR_DIS, file = f)
-
-        else:
-            
-            return
-
     """
     ================================================================================================
     Save Metrics for Whole Epoch
@@ -512,8 +440,7 @@ class Training():
 
         # Create Dictionary
         metrics_dict = {}
-        metrics_dict['Loss/Generator'] = metrics_a[METRICS_GEN]
-        metrics_dict['Loss/Discriminator'] = metrics_a[METRICS_DIS]
+        metrics_dict['Loss/LOSS'] = metrics_a[METRICS_LOSS]
         metrics_dict['Metrics/MAE'] = metrics_a[METRICS_MAE]
         metrics_dict['Metrics/PSNR'] = metrics_a[METRICS_PSNR]
         metrics_dict['Metrics/SSIM'] = metrics_a[METRICS_SSIM]
@@ -537,7 +464,7 @@ class Training():
     def save_images(self, epoch_index, mode, dataloader):
 
         # Model: Validation State
-        self.gen.eval()
+        self.model.eval()
 
         # Get MT and rCT
         # real1: MR; real2: rCT
@@ -553,7 +480,7 @@ class Training():
 
         # Get sCT from Generator
         # fake2: sCT
-        fake2_g = self.gen(real1_g)
+        fake2_g = self.model(real1_g)
 
         # Torch Tensor to Numpy Array
         real1_a = real1_g.to('cpu').detach().numpy()[0, 3:4, :, :]
@@ -591,14 +518,10 @@ class Training():
         # Ending Epoch, Best Score
         state = {
             'time': self.time,
-            'gen_state': self.gen.state_dict(),
-            'gen_name': type(self.gen).__name__,
-            'dis_state': self.dis.state_dict(),
-            'dis_name': type(self.dis).__name__,
-            'optimizer_gen_state': self.optimizer_gen.state_dict(),
-            'optimizer_gen_name': type(self.optimizer_gen).__name__,
-            'optimizer_dis_state': self.optimizer_dis.state_dict(),
-            'optimizer_dis_name': type(self.optimizer_dis).__name__,
+            'model_state': self.model.state_dict(),
+            'model_name': type(self.model).__name__,
+            'opt_state': self.opt.state_dict(),
+            'opt_name': type(self.opt).__name__,
             'epoch': epoch_index,
             'score': score,
         }

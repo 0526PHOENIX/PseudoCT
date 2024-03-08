@@ -4,7 +4,10 @@
 /Data_Nifti
 /Data_Raw
 /Fake
+
+# Result
 /GAN/Result
+/UNET/Result
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
