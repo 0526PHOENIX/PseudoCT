@@ -30,8 +30,8 @@ MAX = 10000000
 STRIDE = 5
 BATCH = 64
 EPOCH = 30
-LR_GEN = 1e-4
-LR_DIS = 1e-4
+LR_GEN = 1e-3
+LR_DIS = 1e-5
 
 METRICS = 5
 METRICS_GEN = 0
@@ -48,7 +48,7 @@ LAMBDA_3 = 10
 C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
-DATA_PATH = "/home/ccy/PseudoCT/Data/Train"
+DATA_PATH = "/home/ccy/PseudoCT/Fake/Train"
 MODEL_PATH = ""
 RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
@@ -497,7 +497,7 @@ class Training():
                 print('Dis Learning Rate:', LR_DIS, file = f)
 
         else:
-            
+
             return
 
     """
