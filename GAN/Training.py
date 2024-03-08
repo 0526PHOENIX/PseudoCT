@@ -29,7 +29,7 @@ Global Constant
 MAX = 10000000
 STRIDE = 5
 BATCH = 64
-EPOCH = 30
+EPOCH = 15
 LR_GEN = 1e-3
 LR_DIS = 1e-5
 
@@ -78,6 +78,9 @@ class Training():
         # Model and Optimizer
         self.initialization()
 
+        # Save Hyperparameters
+        self.save_hyper()
+
         # Begin Point
         self.begin = 1
 
@@ -111,8 +114,8 @@ class Training():
         log_dir = os.path.join(RESULTS_PATH, 'Metrics', self.time)
 
         # Tensorboard Writer
-        self.train_writer = SummaryWriter(log_dir + '_train')
-        self.val_writer = SummaryWriter(log_dir + '_val')
+        self.train_writer = SummaryWriter(log_dir + '/train')
+        self.val_writer = SummaryWriter(log_dir + '/val')
 
         print('\n' + 'TensorBoard Initialized' + '\n')
 
@@ -170,8 +173,8 @@ class Training():
 
             # Tensorboard Writer
             log_dir = os.path.join(RESULTS_PATH, 'Metrics', checkpoint['time'])
-            self.train_writer = SummaryWriter(log_dir + '_train')
-            self.val_writer = SummaryWriter(log_dir + '_val')
+            self.train_writer = SummaryWriter(log_dir + '/train')
+            self.val_writer = SummaryWriter(log_dir + '/val')
 
             return checkpoint['score']
         
@@ -484,7 +487,7 @@ class Training():
     """
     def save_hyper(self):
 
-        path = os.path.join(RESULTS_PATH, 'Metrics', self.time + 'Hyper.txt')
+        path = os.path.join(RESULTS_PATH, 'Metrics', self.time, 'Hyper.txt')
 
         if  not os.path.isfile(path):
 
