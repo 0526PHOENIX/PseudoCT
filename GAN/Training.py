@@ -30,6 +30,7 @@ MAX = 10000000
 STRIDE = 5
 BATCH = 64
 EPOCH = 15
+LR = 1e-5
 
 METRICS = 5
 METRICS_GEN = 0
@@ -46,7 +47,7 @@ LAMBDA_3 = 10
 C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
-DATA_PATH = "/home/ccy/PseudoCT/Fake/Train"
+DATA_PATH = "/home/ccy/PseudoCT/Data/Train"
 MODEL_PATH = ""
 RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
@@ -93,8 +94,8 @@ class Training():
         print('\n' + 'Model Initialized' + '\n')
         
         # Optimizer: Adam
-        self.optimizer_gen = Adam(self.gen.parameters(), lr = 1e-5)
-        self.optimizer_dis = Adam(self.dis.parameters(), lr = 1e-5)
+        self.optimizer_gen = Adam(self.gen.parameters(), lr = LR)
+        self.optimizer_dis = Adam(self.dis.parameters(), lr = LR)
 
         print('\n' + 'Optimizer Initialized' + '\n')
 
