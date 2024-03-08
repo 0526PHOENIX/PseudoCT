@@ -48,9 +48,9 @@ LAMBDA_3 = 10
 C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
-DATA_PATH = "/home/ccy/PseudoCT/Fake/Train"
+DATA_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/Fake/Train"
 MODEL_PATH = ""
-RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
+RESULTS_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/GAN/Result"
 
 
 """
@@ -77,9 +77,6 @@ class Training():
 
         # Model and Optimizer
         self.initialization()
-
-        # Save Hyperparameters
-        self.save_hyper()
 
         # Begin Point
         self.begin = 1
@@ -182,6 +179,9 @@ class Training():
             
             # Tensorboard
             self.init_tensorboard()
+
+            # Save Hyperparameters
+            self.save_hyper()
         
             return MAX
 
@@ -489,20 +489,15 @@ class Training():
 
         path = os.path.join(RESULTS_PATH, 'Metrics', self.time, 'Hyper.txt')
 
-        if not os.path.isfile(path):
+        with open(path, 'w') as f:
 
+            print('Model:', 'Pix2Pix', file = f)
+            print('Batch Size:', BATCH, file = f)
+            print('Epoch:', EPOCH, file = f)
+            print('Gen Learning Rate:', LR_GEN, file = f)
+            print('Dis Learning Rate:', LR_DIS, file = f)
 
-            with open(path, 'a') as f:
-
-                print('Model:', 'Pix2Pix', file = f)
-                print('Batch Size:', BATCH, file = f)
-                print('Epoch:', EPOCH, file = f)
-                print('Gen Learning Rate:', LR_GEN, file = f)
-                print('Dis Learning Rate:', LR_DIS, file = f)
-
-        else:
-
-            return
+        print('\n' + 'Hyperparameter Saved' + '\n')
 
     """
     ================================================================================================
