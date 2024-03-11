@@ -106,8 +106,8 @@ class Training():
         log_dir = os.path.join(RESULTS_PATH, 'Metrics', self.time)
 
         # Tensorboard Writer
-        self.train_writer = SummaryWriter(log_dir + '_train')
-        self.val_writer = SummaryWriter(log_dir + '_val')
+        self.train_writer = SummaryWriter(log_dir + '/Train')
+        self.val_writer = SummaryWriter(log_dir + '/Val')
 
         print('\n' + 'TensorBoard Initialized' + '\n')
 
@@ -163,8 +163,8 @@ class Training():
 
             # Tensorboard Writer
             log_dir = os.path.join(RESULTS_PATH, 'Metrics', checkpoint['time'])
-            self.train_writer = SummaryWriter(log_dir + '_train')
-            self.val_writer = SummaryWriter(log_dir + '_val')
+            self.train_writer = SummaryWriter(log_dir + '/Train')
+            self.val_writer = SummaryWriter(log_dir + '/Val')
 
             return checkpoint['score']
         
@@ -172,6 +172,9 @@ class Training():
             
             # Tensorboard
             self.init_tensorboard()
+
+            # Save Hyperparameters
+            self.save_hyper()
         
             return MAX
 
@@ -292,7 +295,7 @@ class Training():
 
             """
             ========================================================================================
-            Generator
+            Unet
             ========================================================================================
             """
             # Refresh Optimizer's Gradient
@@ -390,7 +393,7 @@ class Training():
 
                 """
                 ========================================================================================
-                Generator
+                Unet
                 ========================================================================================
                 """
                 # Pixelwise Loss
@@ -427,6 +430,24 @@ class Training():
                 progress.set_postfix(loss = loss.item(), mae = mae)
 
             return metrics.to('cpu')
+        
+    """
+    Save Hyperparameter: Batch Size, Epoch, Learning Rate
+    """
+    def save_hyper(self):
+
+        path = os.path.join(RESULTS_PATH, 'Metrics', self.time, 'Hyper.txt')
+
+        with open(path, 'w') as f:
+
+            print('Model:', 'Pix2Pix', file = f)
+            print('Batch Size:', BATCH, file = f)
+            print('Epoch:', EPOCH, file = f)
+            print('Learning Rate:', LR, file = f)
+            print('Pix Loss Lamda:', LAMBDA_1, file = f)
+            print('GDL Loss Lamda:', LAMBDA_2, file = f)
+
+        print('\n' + 'Hyperparameter Saved' + '\n')
     
     """
     ================================================================================================

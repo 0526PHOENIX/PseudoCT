@@ -496,6 +496,9 @@ class Training():
             print('Epoch:', EPOCH, file = f)
             print('Gen Learning Rate:', LR_GEN, file = f)
             print('Dis Learning Rate:', LR_DIS, file = f)
+            print('Adv Loss Lamda:', LAMBDA_1, file = f)
+            print('Pix Loss Lamda:', LAMBDA_2, file = f)
+            print('GDL Loss Lamda:', LAMBDA_3, file = f)
 
         print('\n' + 'Hyperparameter Saved' + '\n')
 
