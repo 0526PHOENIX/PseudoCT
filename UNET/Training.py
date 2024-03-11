@@ -15,7 +15,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from Unet import Unet
+from Unet import Unet, Pretrain
 from Loss import get_pix_loss, get_gdl_loss
 from Loss import get_mae, get_psnr, get_ssim
 from Dataset import Training_2D
@@ -86,7 +86,7 @@ class Training():
     def initialization(self):
 
         # Model: Unet
-        self.model = Unet().to(self.device)\
+        self.model = Unet().to(self.device)
 
         print('\n' + 'Model Initialized' + '\n')
         

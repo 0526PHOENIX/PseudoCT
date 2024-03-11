@@ -240,6 +240,24 @@ class Unet(nn.Module):
 
 """
 ====================================================================================================
+Pretrained Unet
+====================================================================================================
+"""
+def Pretrain(slice = 7):
+
+    model = torch.hub.load('milesial/Pytorch-UNet', 'unet_carvana', pretrained = True, scale = 0.5)
+    
+    in_filters = model.inc.double_conv[3].out_channels
+    model.inc = Init(slice, in_filters)
+
+    out_filters = model.outc.conv.in_channels
+    model.outc = Final(out_filters)
+
+    return model
+
+
+"""
+====================================================================================================
 Main Function
 ====================================================================================================
 """
@@ -248,5 +266,8 @@ if __name__ == '__main__':
     device = (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
     print('\n' + 'Training on device: ' + str(device) + '\n')
     
-    model = Unet(slice = 7).to(device = device)
-    print(summary(model, input_size = (7, 192, 192), batch_size = 2))
+    model_1 = Unet(slice = 7).to(device = device)
+    print(summary(model_1, input_size = (7, 192, 192), batch_size = 2))
+
+    model_2 = Pretrain(slice = 7).to(device = device)
+    print(summary(model_2, input_size = (7, 192, 192), batch_size = 2))
