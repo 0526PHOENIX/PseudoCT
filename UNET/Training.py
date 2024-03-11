@@ -45,7 +45,7 @@ LAMBDA_2 = 1
 C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
-DATA_PATH = "/home/ccy/PseudoCT/Fake/Train"
+DATA_PATH = "/home/ccy/PseudoCT/Data/Train"
 MODEL_PATH = ""
 RESULTS_PATH = "/home/ccy/PseudoCT/UNET/Result"
 
@@ -86,7 +86,7 @@ class Training():
     def initialization(self):
 
         # Model: Unet
-        self.model = Unet().to(self.device)
+        self.model = Pretrain().to(self.device)
 
         print('\n' + 'Model Initialized' + '\n')
         
