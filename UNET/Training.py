@@ -45,9 +45,9 @@ LAMBDA_2 = 1
 C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
-DATA_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/Fake/Train"
+DATA_PATH = "/home/ccy/PseudoCT/Fake/Train"
 MODEL_PATH = ""
-RESULTS_PATH = "C:/Users/PHOENIX/Desktop/PseudoCT/UNET/Result"
+RESULTS_PATH = "/home/ccy/PseudoCT/UNET/Result"
 
 
 """
