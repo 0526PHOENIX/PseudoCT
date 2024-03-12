@@ -30,7 +30,7 @@ MAX = 10000000
 STRIDE = 5
 BATCH = 64
 EPOCH = 30
-LR = 1e-4
+LR = 1e-5
 
 PRETRAIN = True
 
