@@ -32,6 +32,8 @@ BATCH = 64
 EPOCH = 30
 LR = 1e-4
 
+PRETRAIN = True
+
 METRICS = 4
 METRICS_LOSS = 0
 METRICS_MAE = 1
@@ -86,7 +88,11 @@ class Training():
     def initialization(self):
 
         # Model: Unet
-        self.model = Pretrain().to(self.device)
+        if PRETRAIN:
+            self.model = Pretrain(slice = 7).to(self.device)
+
+        else:
+            self.model = Unet(slice = 7).to(self.device)
 
         print('\n' + 'Model Initialized' + '\n')
         
@@ -440,10 +446,11 @@ class Training():
 
         with open(path, 'w') as f:
 
-            print('Model:', 'Pix2Pix', file = f)
+            print('Model:', 'Unet', file = f)
             print('Batch Size:', BATCH, file = f)
             print('Epoch:', EPOCH, file = f)
             print('Learning Rate:', LR, file = f)
+            print('Pretrain:', PRETRAIN, file = f)
             print('Pix Loss Lamda:', LAMBDA_1, file = f)
             print('GDL Loss Lamda:', LAMBDA_2, file = f)
 

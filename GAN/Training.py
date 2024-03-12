@@ -15,7 +15,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from GAN import Generator, Discriminator
+from Gan import Generator, Discriminator
 from Loss import get_adv_loss, get_pix_loss, get_gdl_loss
 from Loss import get_mae, get_psnr, get_ssim
 from Dataset import Training_2D
@@ -32,6 +32,8 @@ BATCH = 64
 EPOCH = 15
 LR_GEN = 1e-3
 LR_DIS = 1e-5
+
+PRETRAIN = True
 
 METRICS = 5
 METRICS_GEN = 0
@@ -89,7 +91,7 @@ class Training():
     def initialization(self):
 
         # Model: Generator and Discriminator
-        self.gen = Generator().to(self.device)
+        self.gen = Generator(pretrain = PRETRAIN, slice = 7).to(self.device)
         self.dis = Discriminator().to(self.device)
 
         print('\n' + 'Model Initialized' + '\n')
@@ -496,6 +498,7 @@ class Training():
             print('Epoch:', EPOCH, file = f)
             print('Gen Learning Rate:', LR_GEN, file = f)
             print('Dis Learning Rate:', LR_DIS, file = f)
+            print('Pretrain:', PRETRAIN, file = f)
             print('Adv Loss Lamda:', LAMBDA_1, file = f)
             print('Pix Loss Lamda:', LAMBDA_2, file = f)
             print('GDL Loss Lamda:', LAMBDA_3, file = f)

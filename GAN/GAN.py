@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchsummary import summary
 
-from Unet import Unet
+from Unet import Unet, Pretrain
 
 
 """
@@ -16,11 +16,17 @@ from Unet import Unet
 Generator: Unet
 ====================================================================================================
 """
-class Generator(Unet):
+def Generator(pretrain = True, slice = 7):
 
-    def __init__(self, slice = 7):
+    if pretrain:
 
-        super().__init__(slice = slice)
+        model = Pretrain(slice = slice)
+
+    else:
+
+        model = Unet(slice = slice)
+    
+    return model
 
 
 """
@@ -133,8 +139,8 @@ if __name__ == '__main__':
     device = (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
     print('\n' + 'Training on device: ' + str(device) + '\n')
     
-    # model = Generator(slice = 7).to(device = device)
-    # print(summary(model, input_size = (7, 192, 192), batch_size = 2))
+    model = Generator(pretrain = True, slice = 7).to(device = device)
+    print(summary(model, input_size = (7, 192, 192), batch_size = 2))
 
     model = Discriminator().to(device = device)
     print(summary(model, input_size = [(1, 192, 192), (7, 192, 192)], batch_size = 2))
