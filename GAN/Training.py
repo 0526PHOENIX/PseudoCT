@@ -214,8 +214,9 @@ class Training():
             metrics_train = self.training(epoch_index, train_dl)
 
             # Save Training Metrics
-            self.save_metrics(epoch_index, 'train', metrics_train)
+            score = self.save_metrics(epoch_index, 'train', metrics_train)
             self.save_images(epoch_index, 'train', train_dl)
+            self.save_model(epoch_index, score)
 
             # Validation: Stride = 10
             if epoch_index == 1 or epoch_index % STRIDE == 0:
@@ -590,7 +591,7 @@ class Training():
     Save Model
     ================================================================================================
     """ 
-    def save_model(self, epoch_index, score, is_best):
+    def save_model(self, epoch_index, score, is_best = True):
 
         # Time, Model State, Optimizer State
         # Ending Epoch, Best Score

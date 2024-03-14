@@ -5,11 +5,11 @@ import numpy as np
 import nibabel as nib
 
 
-MR_RAW = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Raw\\Train\\MR"
-CT_RAW = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Raw\\Train\\CT"
+MR_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Train/MR"
+CT_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Train/CT"
 
-MR = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Check\\Train\\MR"
-CT = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data_Check\\Train\\CT"
+MR = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Train/MR"
+CT = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Train/CT"
 
 
 images = os.listdir(MR_RAW)

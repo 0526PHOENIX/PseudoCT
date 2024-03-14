@@ -141,7 +141,7 @@ Main Function
 """
 if __name__ == '__main__':
 
-    filepath = "C:\\Users\\PHOENIX\\Desktop\\PseudoCT\\Data\\Train"
+    filepath = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Train"
 
     train_2D = Training_2D(filepath, False, 10, 7)
     print()
