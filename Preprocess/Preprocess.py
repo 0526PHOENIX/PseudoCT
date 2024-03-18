@@ -18,6 +18,7 @@ CT = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Train/CT"
 
 MR_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/MR"
 CT_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/CT"
+BG_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/BG"
 
 
 images = os.listdir(MR_RAW)
@@ -36,6 +37,24 @@ for i in range(len(images)):
     """
     image = io.loadmat(os.path.join(MR_RAW, images[i]))['MR'].astype('float32')
     label = io.loadmat(os.path.join(CT_RAW, labels[i]))['CT'].astype('float32')
+
+    """
+    Interpolation
+    """
+    # Convert to Troch Tensor
+    image = torch.from_numpy(image).to(torch.float32)
+    label = torch.from_numpy(label).to(torch.float32)
+
+    # Trilinear Interpolation: (192, 192, 192)
+    image = F.interpolate(image[None, None, ...], size = (192, 192, 192), mode = 'trilinear')[0, 0, ...]
+    label = F.interpolate(label[None, None, ...], size = (192, 192, 192), mode = 'trilinear')[0, 0, ...]
+
+    """
+    Transpose
+    """
+    # Convert to Numpy Array + Transpose: (C * H * W)
+    image = image.numpy().transpose(2, 0, 1)
+    label = label.numpy().transpose(2, 0, 1)
 
     """
     Find Threshold
@@ -95,38 +114,34 @@ for i in range(len(images)):
     image = np.where(mask, image, 0)
     # CT Air: -1000
     label = np.where(mask, label, -1000)
+    # Background
+    mask = np.where(mask, 1, 0)
 
     """
-    Interpolation
+    Rotate: 11~20
     """
-    # Convert to Troch Tensor
-    image = torch.from_numpy(image).to(torch.float32)
-    label = torch.from_numpy(label).to(torch.float32)
+    if (i > 9) and (i < 20):
 
-    # Trilinear Interpolation: (192, 192, 192)
-    image = F.interpolate(image[None, None, ...], size = (192, 192, 192), mode = 'trilinear')[0, 0, ...]
-    label = F.interpolate(label[None, None, ...], size = (192, 192, 192), mode = 'trilinear')[0, 0, ...]
+        image = np.rot90(image, k = 1, axes = (1, 2))
+        label = np.rot90(label, k = 1, axes = (1, 2))
+        mask = np.rot90(mask, k = 1, axes = (1, 2))
 
     """
-    Save MR & CT
+    Save Data
     """
-    # Convert to Numpy Array
-    image = image.numpy()
-    label = label.numpy()
+    # Save Matlab Data
+    io.savemat(os.path.join(MR, images[i]), {'MR': image})
+    io.savemat(os.path.join(CT, labels[i]), {'CT': label})
 
     # Save Nifti Data
-    image_nii = nib.Nifti1Image(image, np.eye(4))
-    nib.save(image_nii, os.path.join(MR_NII, images[i].strip('.mat') + '.nii'))
+    image = nib.Nifti1Image(image, np.eye(4))
+    nib.save(image, os.path.join(MR_NII, images[i].strip('.mat') + '.nii'))
 
-    label_nii = nib.Nifti1Image(label, np.eye(4))
-    nib.save(label_nii, os.path.join(CT_NII, labels[i].strip('.mat') + '.nii'))
+    label = nib.Nifti1Image(label, np.eye(4))
+    nib.save(label, os.path.join(CT_NII, labels[i].strip('.mat') + '.nii'))
 
-    # Save Matlab Data + Transpose: (C * H * W)
-    image = image.transpose(2, 0, 1)
-    io.savemat(os.path.join(MR, images[i]), {'MR': image})
-
-    label = label.transpose(2, 0, 1)
-    io.savemat(os.path.join(CT, labels[i]), {'CT': label})
+    mask = nib.Nifti1Image(mask, np.eye(4))
+    nib.save(mask, os.path.join(BG_NII, 'BG' + str(i + 1) + '.nii'))
 
     """
     Check Progress
