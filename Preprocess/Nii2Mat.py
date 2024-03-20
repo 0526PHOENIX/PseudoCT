@@ -16,8 +16,16 @@ images = os.listdir(MR_NII)
 labels = os.listdir(CT_NII)
 for i in range(len(images)):
 
+    # Load Nifti Data
     image = nib.load(os.path.join(MR_NII, images[i])).get_fdata().astype('float32')
     label = nib.load(os.path.join(CT_NII, labels[i])).get_fdata().astype('float32')
 
+    # Save Matlab Data
     io.savemat(os.path.join(MR, images[i].strip('.nii') + '.mat'), {'MR': image})
     io.savemat(os.path.join(CT, labels[i].strip('.nii') + '.mat'), {'CT': label})
+
+    # Check Progress
+    print()
+    print(i + 1, 'Done')
+    print()
+    print('===========================================================================')
