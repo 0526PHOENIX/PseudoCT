@@ -152,7 +152,7 @@ class Final(nn.Module):
         super().__init__()
 
         self.final_block = nn.Sequential(nn.Conv2d(filters, 1, kernel_size = 1, bias = False),
-                                         nn.Sigmoid())
+                                         nn.Tanh())
     
     def forward(self, img_in):
 

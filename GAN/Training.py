@@ -28,8 +28,8 @@ Global Constant
 """
 MAX = 10000000
 STRIDE = 5
-BATCH = 64
-EPOCH = 15
+BATCH = 32
+EPOCH = 50
 LR_GEN = 1e-3
 LR_DIS = 1e-5
 
@@ -286,15 +286,18 @@ class Training():
             real1_g = real1_t.to(self.device)
             real2_g = real2_t.to(self.device)
 
-            # Save Min and Max for Reconstruction
-            self.max1 = real1_g.max()
-            self.min1 = real1_g.min()
-            self.max2 = real2_g.max()
-            self.min2 = real2_g.min()
+            # Z-Score Normalization
+            real1_g -= real1_g.mean()
+            real1_g /= real1_g.std()
+            # Linear Sacling to [-1, 1]
+            real1_g -= real1_g.min()
+            real1_g /= real1_g.max()
+            real1_g = (real1_g * 2) - 1
 
-            # Min-Max Normalization
-            real1_g = (real1_g - self.min1) / (self.max1 - self.min1 + 1e-6)
-            real2_g = (real2_g - self.min2) / (self.max2 - self.min2 + 1e-6)
+            # Linear Sacling to [-1, 1]
+            real2_g -= -1000
+            real2_g /= 4000
+            real2_g = (real2_g * 2) - 1
 
             # Ground Truth
             valid = torch.ones(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
@@ -354,6 +357,10 @@ class Training():
             Metrics
             ========================================================================================
             """
+            # Reconstruction
+            real2_g = ((real2_g + 1) * 2000) - 1000
+            fake2_g = ((fake2_g + 1) * 2000) - 1000
+
             # MAE
             mae = get_mae(fake2_g, real2_g)
 
@@ -409,15 +416,18 @@ class Training():
                 real1_g = real1_t.to(self.device)
                 real2_g = real2_t.to(self.device)
 
-                # Save Min and Max for Reconstruction
-                self.max1 = real1_g.max()
-                self.min1 = real1_g.min()
-                self.max2 = real2_g.max()
-                self.min2 = real2_g.min()
+                # Z-Score Normalization
+                real1_g -= real1_g.mean()
+                real1_g /= real1_g.std()
+                # Linear Sacling to [-1, 1]
+                real1_g -= real1_g.min()
+                real1_g /= real1_g.max()
+                real1_g = (real1_g * 2) - 1
 
-                # Min-Max Normalization
-                real1_g = (real1_g - self.min1) / (self.max1 - self.min1 + 1e-6)
-                real2_g = (real2_g - self.min2) / (self.max2 - self.min2 + 1e-6)
+                # Linear Sacling to [-1, 1]
+                real2_g -= -1000
+                real2_g /= 4000
+                real2_g = (real2_g * 2) - 1
 
                 # Ground Truth
                 valid = torch.ones(real1_g.size(0), 1, 12, 12, requires_grad = False, device = self.device)
@@ -463,6 +473,10 @@ class Training():
                 Metrics
                 ========================================================================================
                 """
+                # Reconstruction
+                real2_g = ((real2_g + 1) * 2000) - 1000
+                fake2_g = ((fake2_g + 1) * 2000) - 1000
+
                 # MAE
                 mae = get_mae(fake2_g, real2_g)
 
@@ -513,6 +527,9 @@ class Training():
     """ 
     def save_metrics(self, epoch_index, mode, metrics_t):
 
+        # Get Writer
+        writer = getattr(self, mode + '_writer')
+
         # Torch Tensor to Numpy Array
         metrics_a = metrics_t.detach().numpy().mean(axis = 1)
 
@@ -525,7 +542,6 @@ class Training():
         metrics_dict['Metrics/SSIM'] = metrics_a[METRICS_SSIM]
 
         # Save Metrics
-        writer = getattr(self, mode + '_writer')
         for key, value in metrics_dict.items():
             
             writer.add_scalar(key, value.item(), epoch_index)
@@ -545,24 +561,37 @@ class Training():
         # Model: Validation State
         self.gen.eval()
 
+        # Get Writer
+        writer = getattr(self, mode + '_writer')
+
         # Get MT and rCT
         # real1: MR; real2: rCT
         (real1_t, real2_t) = dataloader.dataset[90]
         real1_g = real1_t.to(self.device).unsqueeze(0)
         real2_g = real2_t.to(self.device).unsqueeze(0)
 
-        # Min-Max Normalization
+        # Z-Score Normalization
+        real1_g -= real1_g.mean()
+        real1_g /= real1_g.std()
+        # Linear Sacling to [-1, 1]
         real1_g -= real1_g.min()
-        real1_g /= real1_g.max() + 1e-6
-        real2_g -= real2_g.min()
-        real2_g /= real2_g.max() + 1e-6
+        real1_g /= real1_g.max()
+        real1_g = (real1_g * 2) - 1
+
+        # Linear Sacling to [-1, 1]
+        real2_g -= -1000
+        real2_g /= 4000
+        real2_g = (real2_g * 2) - 1
 
         # Get sCT from Generator
         # fake2: sCT
         fake2_g = self.gen(real1_g)
 
+        # Reconstruction
+        real2_g = ((real2_g + 1) * 2000) - 1000
+        fake2_g = ((fake2_g + 1) * 2000) - 1000
+
         # Torch Tensor to Numpy Array
-        real1_a = real1_g.to('cpu').detach().numpy()[0, 3:4, :, :]
         real2_a = real2_g.to('cpu').detach().numpy()[0, :, :, :]
         fake2_a = fake2_g.to('cpu').detach().numpy()[0, :, :, :]
         
@@ -577,9 +606,8 @@ class Training():
         diff = diff[..., :3]
 
         # Save Image
-        writer = getattr(self, mode + '_writer')
-        writer.add_image(mode + '/MR', real1_a, epoch_index, dataformats = 'CHW')
-        writer.add_image(mode + '/rCT', real2_a, epoch_index, dataformats = 'CHW')
+        writer.add_image(mode + '/MR', real1_t[3:4, :, :], epoch_index, dataformats = 'CHW')
+        writer.add_image(mode + '/rCT', real2_t, epoch_index, dataformats = 'CHW')
         writer.add_image(mode + '/sCT', fake2_a, epoch_index, dataformats = 'CHW')
         writer.add_image(mode + '/Diff', diff, epoch_index, dataformats = 'HWC')
 
