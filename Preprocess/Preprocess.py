@@ -55,6 +55,9 @@ class Preprocess():
         
         self.len = len(self.images)
 
+        self.threshold = [5, 7, 8, 9, 10]
+        self.direction = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+
     """
     ================================================================================================
     Main Process: Interpolation + Transpose + Remove Background + Rotate
@@ -109,7 +112,7 @@ class Preprocess():
             dis = dis / dis[-1]
 
             # Find Threshold
-            if (i + 1) in [5, 7, 8, 9, 10]:
+            if (i + 1) in self.threshold:
 
                 # Specific Case
                 index = np.where(dis <= 0.200)[0][-1]
@@ -159,7 +162,7 @@ class Preprocess():
             """
             Rotate: 11~20
             """
-            if (i > 9) and (i < 20):
+            if (i + 1) in self.direction:
 
                 image = np.rot90(image, k = 1, axes = (1, 2))
                 label = np.rot90(label, k = 1, axes = (1, 2))
