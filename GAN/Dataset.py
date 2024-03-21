@@ -46,7 +46,7 @@ class Training_2D(Dataset):
 
         # Check Data Quantity
         if len(self.images) != len(self.labels):
-            raise ValueError('Unequal amount of images and labels.')
+            raise ValueError('Unequal Amount of Images and Labels.')
         
         # 2D Slice Information
         self.slice = slice                                                  # Channels per Slice
@@ -103,7 +103,7 @@ class Testing_2D(Dataset):
 
         # Check Data Quantity
         if len(self.images) != len(self.labels):
-            raise ValueError('Unequal amount of images and labels.')
+            raise ValueError('Unequal Amount of Images and Labels.')
         
         # 2D Slice Information
         self.slice = slice                                                  # Channels per Slice
