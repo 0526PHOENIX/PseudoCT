@@ -511,10 +511,6 @@ class Training():
         real1_g = real1_t.to(self.device).unsqueeze(0)
         real2_g = real2_t.to(self.device).unsqueeze(0)
 
-        # Linear Sacling to [0, 1]
-        real1_t -= real1_t.min()
-        real1_t /= real1_t.max()
-
         # Z-Score Normalization
         real1_g -= real1_g.mean()
         real1_g /= real1_g.std()
@@ -547,17 +543,10 @@ class Training():
         diff = diff[..., :3]
 
         # Linear Sacling to [0, 1]
-        real1_t -= real1_t.min()
-        real1_t /= real1_t.max()
-
-        real2_a += 1
-        real2_a /= 2
-
-        fake2_a += 1
-        fake2_a /= 2
+        real2_a = (real2_g + 1) / 2
+        fake2_a = (fake2_g + 1) / 2
 
         # Save Image
-        writer.add_image(mode + '/MR', real1_t[3:4, :, :], epoch_index, dataformats = 'CHW')
         writer.add_image(mode + '/rCT', real2_a, epoch_index, dataformats = 'CHW')
         writer.add_image(mode + '/sCT', fake2_a, epoch_index, dataformats = 'CHW')
         writer.add_image(mode + '/Diff', diff, epoch_index, dataformats = 'HWC')
