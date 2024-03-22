@@ -17,18 +17,23 @@ import torch.nn.functional as F
 
 """
 ====================================================================================================
-Data Path
+Global Constant
 ====================================================================================================
 """
-MR_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Train/MR"
-CT_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Train/CT"
+MR_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Test/MR"
+CT_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Test/CT"
 
-MR = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Train/MR"
-CT = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Train/CT"
+MR = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Test/MR"
+CT = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Test/CT"
 
-MR_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/MR"
-CT_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/CT"
-TG_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/TG"
+MR_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/MR"
+CT_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/CT"
+TG_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/TG"
+
+MR_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Test/MR"
+CT_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Test/CT"
+
+TRAIN = False
 
 
 """
@@ -55,8 +60,8 @@ class Preprocess():
         
         self.len = len(self.images)
 
-        self.threshold = [5, 7, 8, 9, 10]
-        self.direction = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        self.threshold = [4]
+        self.direction = []
 
     """
     ================================================================================================
@@ -72,6 +77,7 @@ class Preprocess():
             """
             print()
             print(i + 1, 'Begin')
+            print(self.images[i], self.labels[i])
             print()
 
             """
@@ -358,24 +364,27 @@ class Preprocess():
             print()
             print('===============================================================================')
 
-        # Load MR14
-        image = io.loadmat(os.path.join(MR, self.images[13]))['MR'].astype('float32')
+        # Deal with MR14
+        if TRAIN:
 
-        # Clip
-        image = np.clip(image, 0, (sum / 21))
+            # Load MR14
+            image = io.loadmat(os.path.join(MR, self.images[13]))['MR'].astype('float32')
 
-        # Check
-        print()
-        print(self.images[13])
-        print(image.max(), '\t', image.min())
-        print()
+            # Clip
+            image = np.clip(image, 0, (sum / 21))
 
-        # Save Matlab MR14 Data
-        io.savemat(os.path.join(MR, self.images[13]), {'MR': image})
+            # Check
+            print()
+            print(self.images[13])
+            print(image.max(), '\t', image.min())
+            print()
 
-        # Save Nifti MR14 Data
-        image = nib.Nifti1Image(image, np.eye(4))
-        nib.save(image, os.path.join(MR_NII, self.images[13].strip('.mat') + '.nii'))
+            # Save Matlab MR14 Data
+            io.savemat(os.path.join(MR, self.images[13]), {'MR': image})
+
+            # Save Nifti MR14 Data
+            image = nib.Nifti1Image(image, np.eye(4))
+            nib.save(image, os.path.join(MR_NII, self.images[13].strip('.mat') + '.nii'))
 
     """
     ================================================================================================
@@ -458,6 +467,31 @@ class Preprocess():
             print()
             print('===============================================================================')
 
+    """
+    ================================================================================================
+    Visualize Raw Data
+    ================================================================================================
+    """
+    def visualize(self):
+
+        for i in range(self.len):
+
+            # Load Matlab Data
+            image = io.loadmat(os.path.join(MR_RAW, self.images[i]))['MR'].astype('float32')
+            label = io.loadmat(os.path.join(CT_RAW, self.labels[i]))['CT'].astype('float32')
+
+            # Save Nifti Data
+            image = nib.Nifti1Image(image, np.eye(4))
+            nib.save(image, os.path.join(MR_CHECK, self.images[i].strip('.mat') + '.nii'))
+
+            label = nib.Nifti1Image(label, np.eye(4))
+            nib.save(label, os.path.join(CT_CHECK, self.labels[i].strip('.mat') + '.nii'))
+
+            # Check Progress
+            print()
+            print(i + 1, 'Done')
+            print()
+            print('===============================================================================')
 
 """
 ====================================================================================================
@@ -467,6 +501,8 @@ Main Function
 if __name__ == '__main__':
     
     pre = Preprocess()
+
+    # pre.visualize()
 
     # pre.main()
 
