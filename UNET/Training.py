@@ -543,8 +543,8 @@ class Training():
         diff = diff[..., :3]
 
         # Linear Sacling to [0, 1]
-        real2_a = (real2_g + 1) / 2
-        fake2_a = (fake2_g + 1) / 2
+        real2_a = (real2_a + 1) / 2
+        fake2_a = (fake2_a + 1) / 2
 
         # Save Image
         writer.add_image(mode + '/rCT', real2_a, epoch_index, dataformats = 'CHW')
