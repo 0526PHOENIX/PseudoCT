@@ -559,8 +559,8 @@ class Training():
     def save_images(self, epoch_index, mode, dataloader):
 
         # Model: Validation State
-        self.gen.eval()
-
+        self.model.eval()
+    
         # Get Writer
         writer = getattr(self, mode + '_writer')
 
@@ -585,7 +585,7 @@ class Training():
 
         # Get sCT from Generator
         # fake2: sCT
-        fake2_g = self.gen(real1_g)
+        fake2_g = self.model(real1_g)
 
         # Torch Tensor to Numpy Array
         real2_a = real2_g.to('cpu').detach().numpy()[0, :, :, :]
@@ -605,15 +605,12 @@ class Training():
         real1_t -= real1_t.min()
         real1_t /= real1_t.max()
 
-        real2_a += 1
-        real2_a /= 2
-
-        fake2_a += 1
-        fake2_a /= 2
+        real2_a = (real2_a + 1) / 2
+        fake2_a = (fake2_a + 1) / 2
 
         # Save Image
         writer.add_image(mode + '/MR', real1_t[3:4, :, :], epoch_index, dataformats = 'CHW')
-        writer.add_image(mode + '/rCT', real2_t, epoch_index, dataformats = 'CHW')
+        writer.add_image(mode + '/rCT', real2_a, epoch_index, dataformats = 'CHW')
         writer.add_image(mode + '/sCT', fake2_a, epoch_index, dataformats = 'CHW')
         writer.add_image(mode + '/Diff', diff, epoch_index, dataformats = 'HWC')
 
