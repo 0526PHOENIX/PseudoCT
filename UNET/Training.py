@@ -47,7 +47,7 @@ LAMBDA_2 = 1
 C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
-DATA_PATH = "/home/ccy/PseudoCT/Data/Train"
+DATA_PATH = "/home/ccy/PseudoCT/Fake/Train"
 MODEL_PATH = ""
 RESULTS_PATH = "/home/ccy/PseudoCT/UNET/Result"
 
@@ -510,6 +510,11 @@ class Training():
         (real1_t, real2_t) = dataloader.dataset[90]
         real1_g = real1_t.to(self.device).unsqueeze(0)
         real2_g = real2_t.to(self.device).unsqueeze(0)
+
+        # Linear Sacling to [-1, 1]
+        real1_t -= real1_t.min()
+        real1_t /= real1_t.max()
+        real1_t = (real1_t * 2) - 1
 
         # Z-Score Normalization
         real1_g -= real1_g.mean()

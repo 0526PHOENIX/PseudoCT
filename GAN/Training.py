@@ -570,6 +570,11 @@ class Training():
         real1_g = real1_t.to(self.device).unsqueeze(0)
         real2_g = real2_t.to(self.device).unsqueeze(0)
 
+        # Linear Sacling to [-1, 1]
+        real1_t -= real1_t.min()
+        real1_t /= real1_t.max()
+        real1_t = (real1_t * 2) - 1
+
         # Z-Score Normalization
         real1_g -= real1_g.mean()
         real1_g /= real1_g.std()
