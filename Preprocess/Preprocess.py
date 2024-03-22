@@ -33,6 +33,8 @@ TG_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/TG"
 MR_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Test/MR"
 CT_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Test/CT"
 
+PATH_LIST = [MR, CT, MR_NII, CT_NII, TG_NII, MR_CHECK, CT_CHECK]
+
 TRAIN = False
 
 
@@ -49,17 +51,25 @@ class Preprocess():
     ================================================================================================
     """
     def __init__(self):
-        
+
+        # Check the Path
+        for path in PATH_LIST:
+            if not os.path.exists(path):
+                os.makedirs(path)
+
+        # Get File Name
         self.images = os.listdir(MR_RAW)
         self.labels = os.listdir(CT_RAW)
 
         self.target = os.listdir(TG_NII)
 
+        # Check File Number
         if len(self.images) != len(self.labels):
             raise ValueError('\n', 'Unequal Amount of images and labels.', '\n')
         
         self.len = len(self.images)
 
+        # Problem Case
         self.threshold = [4]
         self.direction = []
 
