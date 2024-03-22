@@ -559,7 +559,7 @@ class Training():
     def save_images(self, epoch_index, mode, dataloader):
 
         # Model: Validation State
-        self.model.eval()
+        self.gen.eval()
     
         # Get Writer
         writer = getattr(self, mode + '_writer')
@@ -585,7 +585,7 @@ class Training():
 
         # Get sCT from Generator
         # fake2: sCT
-        fake2_g = self.model(real1_g)
+        fake2_g = self.gen(real1_g)
 
         # Torch Tensor to Numpy Array
         real2_a = real2_g.to('cpu').detach().numpy()[0, :, :, :]
