@@ -28,10 +28,10 @@ Global Constant
 """
 MAX = 10000000
 STRIDE = 5
-BATCH = 32
+BATCH = 16
 EPOCH = 50
 LR_GEN = 1e-3
-LR_DIS = 1e-5
+LR_DIS = 1e-6
 
 PRETRAIN = True
 
