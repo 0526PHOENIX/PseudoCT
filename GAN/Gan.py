@@ -38,7 +38,7 @@ class Init(nn.Module):
 
         super().__init__()
 
-        self.init_block = nn.Sequential(nn.Conv2d(2, filters, kernel_size = 4, stride = 2, padding = 1),
+        self.init_block = nn.Sequential(nn.Conv2d(1, filters, kernel_size = 4, stride = 2, padding = 1),
                                         nn.LeakyReLU(0.01))
 
     def forward(self, img_in):
@@ -112,9 +112,7 @@ class Discriminator(nn.Module):
 
         self.final = Final(self.filters[3])
 
-    def forward(self, img_in_1, img_in_2):
-
-        img_in = torch.cat((img_in_1, img_in_2), 1)
+    def forward(self, img_in):
 
         init = self.init(img_in)
 
@@ -135,10 +133,10 @@ Main Function
 if __name__ == '__main__':
 
     device = (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
-    print('\n' + 'Training on device: ' + str(device) + '\n')
+    print('\n' + 'Training on Device: ' + str(device) + '\n')
     
-    model = Generator(pretrain = True, slice = 7).to(device = device)
-    print(summary(model, input_size = (7, 192, 192), batch_size = 2))
+    # model = Generator(pretrain = True, slice = 7).to(device = device)
+    # print(summary(model, input_size = (7, 192, 192), batch_size = 2))
 
     model = Discriminator().to(device = device)
-    print(summary(model, input_size = [(1, 192, 192), (7, 192, 192)], batch_size = 2))
+    print(summary(model, input_size = (1, 192, 192), batch_size = 2))

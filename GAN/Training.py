@@ -316,7 +316,7 @@ class Training():
             self.optimizer_gen.zero_grad()
 
             # Adversarial loss
-            loss_adv = get_adv_loss(self.dis(fake2_g, real2_g), valid)
+            loss_adv = get_adv_loss(self.dis(fake2_g), valid)
 
             # Pixelwise Loss
             loss_pix = get_pix_loss(fake2_g, real2_g)
@@ -340,10 +340,10 @@ class Training():
             self.optimizer_dis.zero_grad()
 
             # Real Loss
-            loss_real = get_adv_loss(self.dis(real1_g[:, 3:4, :, :], real2_g), valid)
+            loss_real = get_adv_loss(self.dis(real2_g), valid)
 
             # Fake Loss
-            loss_fake = get_adv_loss(self.dis(fake2_g.detach(), real1_g[:, 3:4, :, :]), fake)
+            loss_fake = get_adv_loss(self.dis(real1_g[:, 3:4, :, :]), fake)
 
             # Total Loss
             loss_dis = (loss_real + loss_fake) / 2
@@ -443,7 +443,7 @@ class Training():
                 ========================================================================================
                 """
                 # Adversarial loss
-                loss_adv = get_adv_loss(self.dis(fake2_g, real2_g), valid)  
+                loss_adv = get_adv_loss(self.dis(fake2_g), valid)  
 
                 # Pixelwise Loss
                 loss_pix = get_pix_loss(fake2_g, real2_g)      
@@ -460,10 +460,10 @@ class Training():
                 ========================================================================================
                 """
                 # Real Loss
-                loss_real = get_adv_loss(self.dis(real1_g[:, 3:4, :, :], real2_g), valid)
+                loss_real = get_adv_loss(self.dis(real2_g), valid)
 
                 # Fake Loss
-                loss_fake = get_adv_loss(self.dis(fake2_g.detach(), real1_g[:, 3:4, :, :]), fake)
+                loss_fake = get_adv_loss(self.dis(real1_g[:, 3:4, :, :]), fake)
 
                 # Total Loss
                 loss_dis = (loss_real + loss_fake) / 2
