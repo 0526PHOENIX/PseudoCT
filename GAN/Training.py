@@ -29,7 +29,7 @@ Global Constant
 MAX = 10000000
 STRIDE = 5
 BATCH = 16
-EPOCH = 100
+EPOCH = 200
 LR_GEN = 1e-4
 LR_DIS = 1e-6
 
