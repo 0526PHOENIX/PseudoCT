@@ -125,11 +125,11 @@ class Training():
     def init_dl(self):
 
         # Training
-        train_ds = Training_2D(root = DATA_PATH, is_val = False, val_stride = STRIDE)
+        train_ds = Training_3D(root = DATA_PATH, is_val = False, val_stride = STRIDE)
         train_dl = DataLoader(train_ds, batch_size = BATCH, shuffle = True, drop_last = False)
 
         # Validation
-        val_ds = Training_2D(root = DATA_PATH, is_val = True, val_stride = STRIDE)
+        val_ds = Training_3D(root = DATA_PATH, is_val = True, val_stride = STRIDE)
         val_dl = DataLoader(val_ds, batch_size = BATCH, shuffle = True, drop_last = False)
 
         return train_dl, val_dl
