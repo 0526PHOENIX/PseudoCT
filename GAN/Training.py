@@ -29,7 +29,7 @@ Global Constant
 MAX = 10000000
 STRIDE = 5
 BATCH = 16
-EPOCH = 200
+EPOCH = 400
 LR_GEN = 1e-4
 LR_DIS = 1e-6
 
@@ -51,7 +51,7 @@ C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
 DATA_PATH = "/home/ccy/PseudoCT/Data/Train"
-MODEL_PATH = "/home/ccy/PseudoCT/GAN/Result/Model/2024-03-25_20-05.pt"
+MODEL_PATH = ""
 RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
 
