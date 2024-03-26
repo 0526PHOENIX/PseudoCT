@@ -3,9 +3,7 @@
 /Data_Check
 /Data_Nii
 /Data_Raw
-/Data_Temp
-/Fake
-/Temp
+/Data_2D
 
 # Result
 /GAN/Result

@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 from Gan import Generator, Discriminator
 from Loss import get_adv_loss, get_pix_loss, get_gdl_loss
 from Loss import get_mae, get_psnr, get_ssim
-from Dataset import Training_2D
+from Dataset import Training_2D, Training_3D
 
 
 """

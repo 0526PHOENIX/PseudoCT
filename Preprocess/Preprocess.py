@@ -20,22 +20,25 @@ import torch.nn.functional as F
 Global Constant
 ====================================================================================================
 """
-MR_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Test/MR"
-CT_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Test/CT"
+MR_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Train/MR"
+CT_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Train/CT"
 
-MR = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Test/MR"
-CT = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Test/CT"
+MR = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Train/MR"
+CT = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Train/CT"
 
-MR_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/MR"
-CT_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/CT"
-TG_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/TG"
+MR_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/MR"
+CT_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/CT"
+TG_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/TG"
 
-MR_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Test/MR"
-CT_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Test/CT"
+MR_2D = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Train/MR"
+CT_2D = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Train/CT"
 
-PATH_LIST = [MR, CT, MR_NII, CT_NII, TG_NII, MR_CHECK, CT_CHECK]
+MR_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Train/MR"
+CT_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Train/CT"
 
-TRAIN = False
+PATH_LIST = [MR, CT, MR_2D, CT_2D, MR_NII, CT_NII, TG_NII, MR_CHECK, CT_CHECK]
+
+TRAIN = True
 
 
 """
@@ -288,60 +291,6 @@ class Preprocess():
 
     """
     ================================================================================================
-    Remove Blank Slice
-    ================================================================================================
-    """
-    def remove_blank(self):
-
-        for i in range(self.len):
-
-            # Load Data and Backgrond
-            image = io.loadmat(os.path.join(MR, self.images[i]))['MR'].astype('float32')
-            label = io.loadmat(os.path.join(CT, self.labels[i]))['CT'].astype('float32')
-
-            masks = nib.load(os.path.join(TG_NII, self.target[i])).get_fdata()
-
-            # Find Blank Slice Index
-            upper = -1
-            lower = -1
-            for j in range(masks.shape[0]):
-
-                mask = masks[j, :, :]
-
-                ratio = mask.sum() / (mask.shape[0] * mask.shape[1])
-
-                if (ratio > 0.075) and (upper == -1):
-
-                    upper = j
-
-                if (ratio < 0.075) and (upper != -1) and (lower == -1):
-
-                    lower = j
-
-            # Remove Blank Slice
-            image = image[upper: lower, :, :]
-            label = label[upper: lower, :, :]
-
-            # Save Matlab Data
-            io.savemat(os.path.join(MR, self.images[i]), {'MR': image})
-            io.savemat(os.path.join(CT, self.labels[i]), {'CT': label})
-
-            # Save Nifti Data
-            image = nib.Nifti1Image(image, np.eye(4))
-            nib.save(image, os.path.join(MR_NII, self.images[i].strip('.mat') + '.nii'))
-
-            label = nib.Nifti1Image(label, np.eye(4))
-            nib.save(label, os.path.join(CT_NII, self.labels[i].strip('.mat') + '.nii'))
-
-            # Check Progress
-            print()
-            print(i + 1, 'Done')
-            print(upper, lower)
-            print()
-            print('===============================================================================')
-
-    """
-    ================================================================================================
     Clip Intensity
     ================================================================================================
     """
@@ -395,6 +344,54 @@ class Preprocess():
             # Save Nifti MR14 Data
             image = nib.Nifti1Image(image, np.eye(4))
             nib.save(image, os.path.join(MR_NII, self.images[13].strip('.mat') + '.nii'))
+
+    """
+    ================================================================================================
+    Remove Blank Slice
+    ================================================================================================
+    """
+    def slice(self, width = 3):
+
+        for i in range(self.len):
+
+            # Load Data and Backgrond
+            image = io.loadmat(os.path.join(MR, self.images[i]))['MR'].astype('float32')
+            label = io.loadmat(os.path.join(CT, self.labels[i]))['CT'].astype('float32')
+
+            masks = nib.load(os.path.join(TG_NII, self.target[i])).get_fdata()
+
+            # Find Blank Slice Index
+            lower = -1
+            upper = -1
+            for j in range(masks.shape[0]):
+
+                mask = masks[j, :, :]
+
+                ratio = mask.sum() / (mask.shape[0] * mask.shape[1])
+
+                if (ratio > 0.075) and (lower == -1):
+
+                    lower = j
+
+                if (ratio < 0.075) and (lower != -1) and (upper == -1):
+
+                    upper = j
+
+            # Slicing
+            for j in range(lower + width, upper - width):
+
+                mr = image[j - width : j + width + 1, :, :]
+                ct = label[j : j + 1, :, :]
+
+                io.savemat(os.path.join(MR_2D, self.images[i].strip('.mat') + '_' + str(j) + '.mat'), {'MR': mr})
+                io.savemat(os.path.join(CT_2D, self.labels[i].strip('.mat') + '_' + str(j) + '.mat'), {'CT': ct})
+
+            # Check Progress
+            print()
+            print(i + 1, 'Done')
+            print(lower, upper)
+            print()
+            print('===============================================================================')
 
     """
     ================================================================================================
@@ -519,8 +516,8 @@ if __name__ == '__main__':
     # pre.mat2nii()
     # pre.nii2mat()
 
-    # pre.remove_blank()
-
     # pre.clip()
 
-    pre.check()
+    pre.slice()
+
+    # pre.check()
