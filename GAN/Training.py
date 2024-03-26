@@ -242,14 +242,14 @@ class Training():
 
                 print('===========================================================================')
 
-                # Early Stop
-                if score == best_score:
-                    count = 0
-                elif count < 5:
-                    count += 1
-                elif count == 5:
-                    print('\n' + 'Early Stop' + '\n')
-                    break
+                # # Early Stop
+                # if score == best_score:
+                #     count = 0
+                # elif count < 5:
+                #     count += 1
+                # elif count == 5:
+                #     print('\n' + 'Early Stop' + '\n')
+                #     break
         
         # Close Tensorboard Writer
         self.train_writer.close()
