@@ -16,10 +16,10 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from Gan import Generator
+from Gan import Generator, Discriminator
 from Loss import get_adv_loss, get_pix_loss, get_gdl_loss
 from Loss import get_mae, get_psnr, get_ssim
-from Dataset import Training_2D, Training_3D, Testing_2D, Testing_3D
+from Dataset import Training_2D, Testing_2D
 
 
 """
@@ -84,6 +84,7 @@ class Evaluate():
     def initialization(self):
 
         self.gen = Generator(pretrain = PRETRAIN, slice = 7).to(self.device)
+        self.dis = Discriminator()
 
         print('\n' + 'Model Initialized' + '\n')
 
@@ -134,6 +135,7 @@ class Evaluate():
 
             # Model: Generator and Discriminator
             self.gen.load_state_dict(checkpoint['gen_state'])
+            self.dis.load_state_dict(checkpoint['dis_state'])
             print('\n' + 'Model Loaded' + '\n')
 
             # Tensorboard
@@ -153,10 +155,10 @@ class Evaluate():
         self.load_model()
 
         # Validate Model
-        # print('\n' + 'Validation: ')
-        # metrics_val = self.validation(val_dl)
-        # self.save_metrics('val', metrics_val)
-        # self.save_images('val', val_dl)
+        print('\n' + 'Validation: ')
+        metrics_val = self.validation(val_dl)
+        self.save_metrics('val', metrics_val)
+        self.save_images('val', val_dl)
 
         # # Evaluate Model
         # print('\n' + 'Testing: ')
@@ -234,7 +236,7 @@ class Evaluate():
                 loss_gdl = get_gdl_loss(fake2_g, real2_g)           
 
                 # Total Loss
-                loss_gen = LAMBDA_1 * loss_adv + LAMBDA_2 * loss_pix + LAMBDA_3 * loss_gdl
+                loss_gen = (LAMBDA_1 * loss_adv) + (LAMBDA_2 * loss_pix) + (LAMBDA_3 * loss_gdl)
 
                 """
                 ========================================================================================

@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 from Gan import Generator, Discriminator
 from Loss import get_adv_loss, get_pix_loss, get_gdl_loss
 from Loss import get_mae, get_psnr, get_ssim
-from Dataset import Training_2D, Training_3D
+from Dataset import Training_2D
 
 
 """
@@ -321,7 +321,7 @@ class Training():
             loss_gdl = get_gdl_loss(fake2_g, real2_g)           
 
             # Total Loss
-            loss_gen = LAMBDA_1 * loss_adv + LAMBDA_2 * loss_pix + LAMBDA_3 * loss_gdl
+            loss_gen = (LAMBDA_1 * loss_adv) + (LAMBDA_2 * loss_pix) + (LAMBDA_3 * loss_gdl)
 
             # Update Generator's Parameters
             loss_gen.backward()
@@ -448,7 +448,7 @@ class Training():
                 loss_gdl = get_gdl_loss(fake2_g, real2_g)           
 
                 # Total Loss
-                loss_gen = LAMBDA_1 * loss_adv + LAMBDA_2 * loss_pix + LAMBDA_3 * loss_gdl
+                loss_gen = (LAMBDA_1 * loss_adv) + (LAMBDA_2 * loss_pix) + (LAMBDA_3 * loss_gdl)
         
                 """
                 ========================================================================================
