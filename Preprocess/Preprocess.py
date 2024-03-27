@@ -23,22 +23,23 @@ Global Constant
 MR_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Train/MR"
 CT_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Train/CT"
 
-MR = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Test/MR"
-CT = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Test/CT"
+MR = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Train/MR"
+CT = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Train/CT"
 
-MR_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/MR"
-CT_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/CT"
-TG_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/TG"
+MR_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/MR"
+CT_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/CT"
+TG_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/TG"
 
-MR_2D = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Test/MR"
-CT_2D = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Test/CT"
+MR_2D = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Train/MR"
+CT_2D = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Train/CT"
+TG_2D = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Train/TG"
 
-MR_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Test/MR"
-CT_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Test/CT"
+MR_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Train/MR"
+CT_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Train/CT"
 
-PATH_LIST = [MR, CT, MR_2D, CT_2D, MR_NII, CT_NII, TG_NII, MR_CHECK, CT_CHECK]
+PATH_LIST = [MR, CT, MR_2D, CT_2D, TG_2D, MR_NII, CT_NII, TG_NII, MR_CHECK, CT_CHECK]
 
-TRAIN = False
+TRAIN = True
 
 
 """
@@ -61,8 +62,8 @@ class Preprocess():
                 os.makedirs(path)
 
         # Get File Name
-        self.images = os.listdir(MR)
-        self.labels = os.listdir(CT)
+        self.images = os.listdir(MR_RAW)
+        self.labels = os.listdir(CT_RAW)
 
         self.target = os.listdir(TG_NII)
 
@@ -382,9 +383,15 @@ class Preprocess():
 
                 mr = image[j - width : j + width + 1, :, :]
                 ct = label[j : j + 1, :, :]
+                tg = masks[j : j + 1, :, :]
 
                 io.savemat(os.path.join(MR_2D, self.images[i].strip('.mat') + '_' + str(j) + '.mat'), {'MR': mr})
                 io.savemat(os.path.join(CT_2D, self.labels[i].strip('.mat') + '_' + str(j) + '.mat'), {'CT': ct})
+                
+                if i < 9:
+                    io.savemat(os.path.join(TG_2D, 'TG0' + str(i + 1) + '_' + str(j) + '.mat'), {'TG': tg})
+                else:
+                    io.savemat(os.path.join(TG_2D, 'TG' + str(i + 1) + '_' + str(j) + '.mat'), {'TG': tg})
 
             # Check Progress
             print()

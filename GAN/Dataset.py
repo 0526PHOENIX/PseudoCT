@@ -5,6 +5,7 @@ Package
 """
 import os
 import random
+import numpy as np
 from scipy import io
 from matplotlib import pyplot as plt
 
@@ -25,6 +26,7 @@ class Training_2D(Dataset):
         self.root = root
         self.images_path = os.path.join(self.root, 'MR')
         self.labels_path = os.path.join(self.root, 'CT')
+        self.masks_path = os.path.join(self.root, 'TG')
 
         # MR File List
         self.images = []
@@ -36,13 +38,20 @@ class Training_2D(Dataset):
         for series in sorted(os.listdir(self.labels_path)):
             self.labels.append(os.path.join(self.labels_path, series))
 
+        # TG File List
+        self.masks = []
+        for series in sorted(os.listdir(self.masks_path)):
+            self.masks.append(os.path.join(self.masks_path, series))
+
         # Split Training and Validation Dataset
         if is_val:
             self.images = self.images[::val_stride]
             self.labels = self.labels[::val_stride]
+            self.masks = self.masks[::val_stride]
         else:
             del self.images[::val_stride]
             del self.labels[::val_stride]
+            del self.masks[::val_stride]
 
         # Check Data Quantity
         if len(self.images) != len(self.labels):
@@ -62,7 +71,11 @@ class Training_2D(Dataset):
         label = io.loadmat(self.labels[index])['CT'].astype('float32')
         label = torch.from_numpy(label)
 
-        return (image, label)
+        # Load TG Data: (1, 192, 192)
+        mask = io.loadmat(self.masks[index])['TG'].astype('float32')
+        mask = torch.from_numpy(mask)
+
+        return (image, label, mask)
     
 """
 ====================================================================================================
@@ -77,6 +90,7 @@ class Testing_2D(Dataset):
         self.root = root
         self.images_path = os.path.join(self.root, 'MR')
         self.labels_path = os.path.join(self.root, 'CT')
+        self.masks_path = os.path.join(self.root, 'TG')
 
         # MR File List
         self.images = []
@@ -87,6 +101,11 @@ class Testing_2D(Dataset):
         self.labels = []
         for series in sorted(os.listdir(self.labels_path)):
             self.labels.append(os.path.join(self.labels_path, series))
+
+        # TG File List
+        self.masks = []
+        for series in sorted(os.listdir(self.masks_path)):
+            self.masks.append(os.path.join(self.masks_path, series))
 
         # Check Data Quantity
         if len(self.images) != len(self.labels):
@@ -106,7 +125,11 @@ class Testing_2D(Dataset):
         label = io.loadmat(self.labels[index])['CT'].astype('float32')
         label = torch.from_numpy(label)
 
-        return (image, label)
+        # Load TG Data: (1, 192, 192)
+        mask = io.loadmat(self.masks[index])['TG'].astype('float32')
+        mask = torch.from_numpy(mask)
+
+        return (image, label, mask)
 
 """
 ====================================================================================================
@@ -245,11 +268,15 @@ if __name__ == '__main__':
         
         index = random.randint(0, len(train_2D))
         
-        image, label = train_2D[index]
+        image, label, mask = train_2D[index]
 
-        plt.figure()
-        plt.subplot(1, 2, 1)
-        plt.imshow(image[3, :, :], cmap = 'gray')
-        plt.subplot(1, 2, 2)
-        plt.imshow(label[0, :, :], cmap = 'gray')
-        plt.show()
+        label = np.where(mask, label, -1000)
+
+        # plt.figure()
+        # plt.subplot(1, 3, 1)
+        # plt.imshow(image[3, :, :], cmap = 'gray')
+        # plt.subplot(1, 3, 2)
+        # plt.imshow(label[0, :, :], cmap = 'gray')
+        # plt.subplot(1, 3, 3)
+        # plt.imshow(mask[0, :, :], cmap = 'gray')
+        # plt.show()

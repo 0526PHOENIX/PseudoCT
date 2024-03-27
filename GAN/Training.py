@@ -35,12 +35,13 @@ LR_DIS = 1e-6
 
 PRETRAIN = True
 
-METRICS = 5
+METRICS = 6
 METRICS_GEN = 0
 METRICS_DIS = 1
 METRICS_MAE = 2
-METRICS_PSNR = 3
-METRICS_SSIM = 4
+METRICS_HEAD = 3
+METRICS_PSNR = 4
+METRICS_SSIM = 5
 
 LAMBDA_1 = 3
 LAMBDA_2 = 5
@@ -277,10 +278,11 @@ class Training():
             ========================================================================================
             """
             # Get MT and rCT
-            # real1: MR; real2: rCT
-            (real1_t, real2_t) = batch_tuple
+            # real1: MR; real2: rCT; mask: Head Region
+            (real1_t, real2_t, mask_t) = batch_tuple
             real1_g = real1_t.to(self.device)
             real2_g = real2_t.to(self.device)
+            mask_g = mask_t.to(self.device)
 
             # Z-Score Normalization
             real1_g -= real1_g.mean()
@@ -360,6 +362,9 @@ class Training():
             # MAE
             mae = get_mae(fake2_g, real2_g)
 
+            # Head MAE
+            head = get_mae(np.where(mask_g, fake2_g, -1000), real2_g)
+
             # PSNR
             psnr = get_psnr(fake2_g, real2_g)
 
@@ -370,12 +375,13 @@ class Training():
             metrics[METRICS_GEN, batch_index] = loss_gen.item()
             metrics[METRICS_DIS, batch_index] = loss_dis.item()
             metrics[METRICS_MAE, batch_index] = mae
+            metrics[METRICS_HEAD, batch_index] = head
             metrics[METRICS_PSNR, batch_index] = psnr
             metrics[METRICS_SSIM, batch_index] = ssim
 
             # Progress Bar Information
             progress.set_description('Epoch [' + space.format(epoch_index, ' / ', EPOCH) + ']')
-            progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae)
+            progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae, head = head)
 
         return metrics.to('cpu')
 
@@ -407,10 +413,11 @@ class Training():
                 ========================================================================================
                 """
                 # Get MT and rCT
-                # real1: MR; real2: rCT
-                (real1_t, real2_t) = batch_tuple
+                # real1: MR; real2: rCT; mask: Head Region
+                (real1_t, real2_t, mask_t) = batch_tuple
                 real1_g = real1_t.to(self.device)
                 real2_g = real2_t.to(self.device)
+                mask_g = mask_t.to(self.device)
 
                 # Z-Score Normalization
                 real1_g -= real1_g.mean()
@@ -476,6 +483,9 @@ class Training():
                 # MAE
                 mae = get_mae(fake2_g, real2_g)
 
+                # Head MAE
+                head = get_mae(np.where(mask_g, fake2_g, -1000), real2_g)
+
                 # PSNR
                 psnr = get_psnr(fake2_g, real2_g)
 
@@ -486,12 +496,13 @@ class Training():
                 metrics[METRICS_GEN, batch_index] = loss_gen.item()
                 metrics[METRICS_DIS, batch_index] = loss_dis.item()
                 metrics[METRICS_MAE, batch_index] = mae
+                metrics[METRICS_HEAD, batch_index] = head
                 metrics[METRICS_PSNR, batch_index] = psnr
                 metrics[METRICS_SSIM, batch_index] = ssim
                 
                 # Progress Bar Information
                 progress.set_description('Epoch [' + space.format(epoch_index, ' / ', EPOCH) + ']')
-                progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae)
+                progress.set_postfix(loss_gen = loss_gen.item(), loss_dis = loss_dis.item(), mae = mae, head = head)
 
             return metrics.to('cpu')
     
@@ -536,6 +547,7 @@ class Training():
         metrics_dict['Loss/Generator'] = metrics_a[METRICS_GEN]
         metrics_dict['Loss/Discriminator'] = metrics_a[METRICS_DIS]
         metrics_dict['Metrics/MAE'] = metrics_a[METRICS_MAE]
+        metrics_dict['Metrics/MAE_Head'] = metrics_a[METRICS_HEAD]
         metrics_dict['Metrics/PSNR'] = metrics_a[METRICS_PSNR]
         metrics_dict['Metrics/SSIM'] = metrics_a[METRICS_SSIM]
 
@@ -547,7 +559,10 @@ class Training():
         # Refresh Tensorboard Writer
         writer.flush()
 
-        return metrics_dict['Metrics/MAE']
+        if metrics_dict['Metrics/MAE'] > 50:
+            return metrics_dict['Metrics/MAE']
+        else:
+            return metrics_dict['Metrics/MAE_HEAD']
 
     """
     ================================================================================================
@@ -563,8 +578,8 @@ class Training():
         writer = getattr(self, mode + '_writer')
 
         # Get MT and rCT
-        # real1: MR; real2: rCT
-        (real1_t, real2_t) = dataloader.dataset[90]
+        # real1: MR; real2: rCT; mask: Head Region
+        (real1_t, real2_t, _) = dataloader.dataset[90]
         real1_g = real1_t.to(self.device).unsqueeze(0)
         real2_g = real2_t.to(self.device).unsqueeze(0)
 
