@@ -12,11 +12,10 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 
 import torch
-from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from Gan import Generator, Discriminator
+from Gan import Generator
 from Loss import get_adv_loss, get_pix_loss, get_gdl_loss
 from Loss import get_mae, get_psnr, get_ssim
 from Dataset import Training_2D, Training_3D, Testing_2D, Testing_3D
@@ -42,8 +41,11 @@ LAMBDA_1 = 2
 LAMBDA_2 = 3
 LAMBDA_3 = 1
 
-DATA_PATH = "/home/ccy/PseudoCT/Data_2D/Train"
+VAL_PATH = "/home/ccy/PseudoCT/Data_2D/Train"
+TEST_PATH = "/home/ccy/PseudoCT/Data_2D/Test"
+
 FILE_PATH = "/home/ccy/PseudoCT/Data/Train"
+
 MODEL_PATH = "/home/ccy/PseudoCT/GAN/Result/Model/2024-03-27_12-48.pt"
 RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
@@ -78,13 +80,11 @@ class Evaluate():
     Model
     ================================================================================================
     """
-    def init_model(self):
+    def initialization(self):
 
         self.gen = Generator(pretrain = PRETRAIN, slice = 7).to(self.device)
 
         print('\n' + 'Model Initialized' + '\n')
-
-    
 
     """
     ================================================================================================
@@ -110,10 +110,10 @@ class Evaluate():
     def init_dl(self):
 
         # Validation
-        val_ds = Training_2D(root = DATA_PATH, is_val = True, val_stride = STRIDE)
+        val_ds = Training_2D(root = VAL_PATH, is_val = True, val_stride = STRIDE)
         val_dl = DataLoader(val_ds, batch_size = BATCH, shuffle = True, drop_last = False)
 
-        test_ds = Testing_2D(root = DATA_PATH, slice = SLICE)
+        test_ds = Testing_2D(root = TEST_PATH)
         test_dl = DataLoader(test_ds, batch_size = BATCH, drop_last = False)
 
         return val_dl, test_dl
@@ -154,18 +154,14 @@ class Evaluate():
         # Validate Model
         print('\n' + 'Validation: ')
         metrics_val = self.validation(val_dl)
-        self.save_metrics(metrics_val)
-        self.save_images(val_dl)
+        self.save_metrics('val', metrics_val)
+        self.save_images('val', val_dl)
 
-        # Evaluate Model
-        print('\n' + 'Testing: ')
-        metrics_test = self.testing(test_dl)
-        self.save_metrics(metrics_test)
-        self.save_images(test_dl)
-
-        # Inference New Data
-        print('\n' + 'Inferencing: ')
-        self.inference(file_path)
+        # # Evaluate Model
+        # print('\n' + 'Testing: ')
+        # metrics_test = self.testing(test_dl)
+        # self.save_metrics(metrics_test)
+        # self.save_images(test_dl)
 
     """
     ================================================================================================
@@ -194,8 +190,8 @@ class Evaluate():
                 # Get MT and rCT
                 # real1: MR; real2: rCT
                 (images_t, labels_t) = batch_tuple
-                images_g = images_t.to(self.device)
-                labels_g = labels_t.to(self.device)
+                real1_g = images_t.to(self.device)
+                real2_g = labels_t.to(self.device)
 
                 # Z-Score Normalization
                 real1_g -= real1_g.mean()
@@ -281,7 +277,6 @@ class Evaluate():
         # Create Dictionary
         metrics_dict = {}
         metrics_dict['Loss/Generator'] = metrics_a[METRICS_GEN]
-        metrics_dict['Loss/Discriminator'] = metrics_a[METRICS_DIS]
         metrics_dict['Metrics/MAE'] = metrics_a[METRICS_MAE]
         metrics_dict['Metrics/PSNR'] = metrics_a[METRICS_PSNR]
         metrics_dict['Metrics/SSIM'] = metrics_a[METRICS_SSIM]
@@ -367,16 +362,18 @@ class Evaluate():
     """
     def inference(self, number = 1, width = 3):
 
+        print('\n' + 'Inferencing: ')
+
         # Model: validation State
         self.gen.eval()
 
-        # Get MR and CT Series
+        # Get MR Series
         if number < 9:
-            image = io.loadmat(os.path.join(FILE_PATH, 'MR' + '0' + str(number)))['MR'].astype('float32')
+            image = io.loadmat(os.path.join(FILE_PATH, 'MR' + '0' + str(number) + '.mat'))['MR'].astype('float32')
         else:
-            image = io.loadmat(os.path.join(FILE_PATH, 'MR' + str(number)))['MR'].astype('float32')
+            image = io.loadmat(os.path.join(FILE_PATH, 'MR' + str(number) + '.mat'))['MR'].astype('float32')
 
-        result = []
+        buffer = []
         for i in range(width, image.shape[0] - width):
 
             # Get MR and CT Slice
@@ -401,17 +398,16 @@ class Evaluate():
             fake2_g = ((fake2_g + 1) * 2000) - 1000
 
             # Stack
-            result.append(fake2_g)
+            buffer.append(fake2_g[0, 0, :, :])
 
-        
+        # Get CT Series from Stack
+        result = np.stack(buffer, axis = 0)
 
-
-
-
-
-
-
-        
+        # Save CT Series
+        if number < 9:
+            io.savemat(os.path.join(RESULTS_PATH, 'CT' + '0' + str(number) + '.mat'), {'CT': result})
+        else:
+            io.savemat(os.path.join(RESULTS_PATH, 'CT' + str(number) + '.mat'), {'CT': result})
 
 
 """
@@ -421,4 +417,7 @@ Main Function
 """
 if __name__ == '__main__':
 
-    Evaluate().main()
+    eva = Evaluate()
+    eva.main()
+    eva.inference(number = 3)
+    

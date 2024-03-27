@@ -71,7 +71,7 @@ Testing
 """
 class Testing_2D(Dataset):
 
-    def __init__(self, root = "", val_stride = 10):
+    def __init__(self, root = ""):
 
         # Filepath
         self.root = root
