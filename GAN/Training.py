@@ -50,8 +50,8 @@ LAMBDA_3 = 1
 C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
-DATA_PATH = "/home/ccy/PseudoCT/Data/Train"
-MODEL_PATH = "/home/ccy/PseudoCT/GAN/Result/Model/2024-03-26_21-55.pt"
+DATA_PATH = "/home/ccy/PseudoCT/Data_2D/Train"
+MODEL_PATH = ""
 RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
 
@@ -126,11 +126,11 @@ class Training():
     def init_dl(self):
 
         # Training
-        train_ds = Training_3D(root = DATA_PATH, is_val = False, val_stride = STRIDE)
+        train_ds = Training_2D(root = DATA_PATH, is_val = False, val_stride = STRIDE)
         train_dl = DataLoader(train_ds, batch_size = BATCH, shuffle = True, drop_last = False)
 
         # Validation
-        val_ds = Training_3D(root = DATA_PATH, is_val = True, val_stride = STRIDE)
+        val_ds = Training_2D(root = DATA_PATH, is_val = True, val_stride = STRIDE)
         val_dl = DataLoader(val_ds, batch_size = BATCH, shuffle = True, drop_last = False)
 
         return train_dl, val_dl
