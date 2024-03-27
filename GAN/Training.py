@@ -48,7 +48,7 @@ LAMBDA_2 = 5
 LAMBDA_3 = 1
 
 DATA_PATH = "/home/ccy/PseudoCT/Data_2D/Train"
-MODEL_PATH = ""
+MODEL_PATH = "/home/ccy/PseudoCT/GAN/Result/Model/2024-03-28_01-15.pt"
 RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
 
@@ -363,7 +363,7 @@ class Training():
             mae = get_mae(fake2_g, real2_g)
 
             # Head MAE
-            head = get_mae(np.where(mask_g, fake2_g, -1000), real2_g)
+            head = get_mae(torch.where(mask_g, fake2_g, -1000), real2_g)
 
             # PSNR
             psnr = get_psnr(fake2_g, real2_g)
@@ -484,7 +484,7 @@ class Training():
                 mae = get_mae(fake2_g, real2_g)
 
                 # Head MAE
-                head = get_mae(np.where(mask_g, fake2_g, -1000), real2_g)
+                head = get_mae(torch.where(mask_g, fake2_g, -1000), real2_g)
 
                 # PSNR
                 psnr = get_psnr(fake2_g, real2_g)
@@ -562,7 +562,7 @@ class Training():
         if metrics_dict['Metrics/MAE'] > 50:
             return metrics_dict['Metrics/MAE']
         else:
-            return metrics_dict['Metrics/MAE_HEAD']
+            return metrics_dict['Metrics/MAE_Head']
 
     """
     ================================================================================================

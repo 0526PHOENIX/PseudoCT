@@ -72,7 +72,7 @@ class Training_2D(Dataset):
         label = torch.from_numpy(label)
 
         # Load TG Data: (1, 192, 192)
-        mask = io.loadmat(self.masks[index])['TG'].astype('float32')
+        mask = io.loadmat(self.masks[index])['TG'].astype('bool')
         mask = torch.from_numpy(mask)
 
         return (image, label, mask)
@@ -126,7 +126,7 @@ class Testing_2D(Dataset):
         label = torch.from_numpy(label)
 
         # Load TG Data: (1, 192, 192)
-        mask = io.loadmat(self.masks[index])['TG'].astype('float32')
+        mask = io.loadmat(self.masks[index])['TG'].astype('bool')
         mask = torch.from_numpy(mask)
 
         return (image, label, mask)
@@ -260,7 +260,7 @@ Main Function
 """
 if __name__ == '__main__':
 
-    filepath = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Train"
+    filepath = "/home/ccy/PseudoCT/Data_2D/Train"
 
     train_2D = Training_2D(filepath, False, 10)
 
@@ -270,7 +270,9 @@ if __name__ == '__main__':
         
         image, label, mask = train_2D[index]
 
-        label = np.where(mask, label, -1000)
+        print(label.max(), label.min())
+        label = torch.where(mask, label, 5000)
+        print(label.max(), label.min())
 
         # plt.figure()
         # plt.subplot(1, 3, 1)
