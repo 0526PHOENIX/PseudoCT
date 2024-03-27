@@ -7,6 +7,7 @@ import os
 import math
 import datetime
 import numpy as np
+import nibabel as nib
 from scipy import io
 from tqdm import tqdm
 from matplotlib import pyplot as plt
@@ -143,7 +144,7 @@ class Evaluate():
     Main Evaluating Function
     ================================================================================================
     """
-    def main(self):
+    def main(self, number = ""):
 
         # Data Loader
         val_dl, test_dl = self.init_dl()
@@ -152,16 +153,20 @@ class Evaluate():
         self.load_model()
 
         # Validate Model
-        print('\n' + 'Validation: ')
-        metrics_val = self.validation(val_dl)
-        self.save_metrics('val', metrics_val)
-        self.save_images('val', val_dl)
+        # print('\n' + 'Validation: ')
+        # metrics_val = self.validation(val_dl)
+        # self.save_metrics('val', metrics_val)
+        # self.save_images('val', val_dl)
 
         # # Evaluate Model
         # print('\n' + 'Testing: ')
         # metrics_test = self.testing(test_dl)
         # self.save_metrics(metrics_test)
         # self.save_images(test_dl)
+
+        # Infernece New Data
+        print('\n' + 'Inferencing: ')
+        self.inference(number = number)
 
     """
     ================================================================================================
@@ -360,18 +365,16 @@ class Evaluate():
     Inference
     ================================================================================================
     """
-    def inference(self, number = 1, width = 3):
-
-        print('\n' + 'Inferencing: ')
+    def inference(self, number = "", width = 3):
 
         # Model: validation State
         self.gen.eval()
 
         # Get MR Series
-        if number < 9:
-            image = io.loadmat(os.path.join(FILE_PATH, 'MR' + '0' + str(number) + '.mat'))['MR'].astype('float32')
-        else:
-            image = io.loadmat(os.path.join(FILE_PATH, 'MR' + str(number) + '.mat'))['MR'].astype('float32')
+        image = io.loadmat(os.path.join(FILE_PATH, 'MR', 'MR' + number + '.mat'))['MR'].astype('float32')
+
+        # Numpy Array to Torch Tensor
+        image = torch.from_numpy(image)
 
         buffer = []
         for i in range(width, image.shape[0] - width):
@@ -397,17 +400,20 @@ class Evaluate():
             # Reconstruction
             fake2_g = ((fake2_g + 1) * 2000) - 1000
 
+            # Torch Tensor to Numpy Array
+            fake2_a = fake2_g.to('cpu').detach().numpy()[0, 0, :, :]
+
             # Stack
-            buffer.append(fake2_g[0, 0, :, :])
+            buffer.append(fake2_a)
 
         # Get CT Series from Stack
         result = np.stack(buffer, axis = 0)
 
         # Save CT Series
-        if number < 9:
-            io.savemat(os.path.join(RESULTS_PATH, 'CT' + '0' + str(number) + '.mat'), {'CT': result})
-        else:
-            io.savemat(os.path.join(RESULTS_PATH, 'CT' + str(number) + '.mat'), {'CT': result})
+        io.savemat(os.path.join(RESULTS_PATH, 'CT', 'CT' + number + '.mat'), {'CT': result})
+
+        result = nib.Nifti1Image(result, np.eye(4))
+        nib.save(result, os.path.join(RESULTS_PATH, 'CT', 'CT' + number + '.nii'))
 
 
 """
@@ -418,6 +424,5 @@ Main Function
 if __name__ == '__main__':
 
     eva = Evaluate()
-    eva.main()
-    eva.inference(number = 3)
+    eva.main(number = "03")
     

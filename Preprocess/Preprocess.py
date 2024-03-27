@@ -103,8 +103,8 @@ class Preprocess():
             Interpolation
             """
             # Convert to Troch Tensor
-            image = torch.from_numpy(image).to(torch.float32)
-            label = torch.from_numpy(label).to(torch.float32)
+            image = torch.from_numpy(image)
+            label = torch.from_numpy(label)
 
             # Trilinear Interpolation: (192, 192, 192)
             image = F.interpolate(image[None, None, ...], size = (192, 192, 192), mode = 'trilinear')[0, 0, ...]
@@ -237,8 +237,8 @@ class Preprocess():
             Interpolation
             """
             # Convert to Troch Tensor
-            image = torch.from_numpy(image).to(torch.float32)
-            label = torch.from_numpy(label).to(torch.float32)
+            image = torch.from_numpy(image)
+            label = torch.from_numpy(label)
 
             # Trilinear Interpolation: (192, 192, 192)
             image = F.interpolate(image[None, None, ...], size = (192, 192, 192), mode = 'trilinear')[0, 0, ...]
