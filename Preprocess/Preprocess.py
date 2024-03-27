@@ -23,22 +23,22 @@ Global Constant
 MR_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Train/MR"
 CT_RAW = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Raw/Train/CT"
 
-MR = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Train/MR"
-CT = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Train/CT"
+MR = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Test/MR"
+CT = "C:/Users/PHOENIX/Desktop/PseudoCT/Data/Test/CT"
 
-MR_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/MR"
-CT_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/CT"
-TG_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Train/TG"
+MR_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/MR"
+CT_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/CT"
+TG_NII = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Nii/Test/TG"
 
-MR_2D = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Train/MR"
-CT_2D = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Train/CT"
+MR_2D = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Test/MR"
+CT_2D = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_2D/Test/CT"
 
-MR_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Train/MR"
-CT_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Train/CT"
+MR_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Test/MR"
+CT_CHECK = "C:/Users/PHOENIX/Desktop/PseudoCT/Data_Check/Test/CT"
 
 PATH_LIST = [MR, CT, MR_2D, CT_2D, MR_NII, CT_NII, TG_NII, MR_CHECK, CT_CHECK]
 
-TRAIN = True
+TRAIN = False
 
 
 """
@@ -61,8 +61,8 @@ class Preprocess():
                 os.makedirs(path)
 
         # Get File Name
-        self.images = os.listdir(MR_RAW)
-        self.labels = os.listdir(CT_RAW)
+        self.images = os.listdir(MR)
+        self.labels = os.listdir(CT)
 
         self.target = os.listdir(TG_NII)
 

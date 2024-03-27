@@ -46,7 +46,7 @@ TEST_PATH = "/home/ccy/PseudoCT/Data_2D/Test"
 
 FILE_PATH = "/home/ccy/PseudoCT/Data/Train"
 
-MODEL_PATH = "/home/ccy/PseudoCT/GAN/Result/Model/2024-03-27_12-48.pt"
+MODEL_PATH = "/home/ccy/PseudoCT/GAN/Result/Model/2024-03-27_12-48.best.pt"
 RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
 
