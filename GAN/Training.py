@@ -30,7 +30,7 @@ MAX = 10000000
 STRIDE = 5
 BATCH = 16
 EPOCH = 800
-LR_GEN = 1e-4
+LR_GEN = 1e-3
 LR_DIS = 1e-6
 
 PRETRAIN = True
@@ -42,12 +42,12 @@ METRICS_MAE = 2
 METRICS_PSNR = 3
 METRICS_SSIM = 4
 
-LAMBDA_1 = 2
-LAMBDA_2 = 3
+LAMBDA_1 = 3
+LAMBDA_2 = 5
 LAMBDA_3 = 1
 
 DATA_PATH = "/home/ccy/PseudoCT/Data_2D/Train"
-MODEL_PATH = "/home/ccy/PseudoCT/GAN/Result/Model/2024-03-27_12-48.pt"
+MODEL_PATH = ""
 RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
 
