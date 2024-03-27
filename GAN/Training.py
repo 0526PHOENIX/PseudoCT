@@ -51,7 +51,7 @@ C:/Users/PHOENIX/Desktop/
 /home/ccy/
 """
 DATA_PATH = "/home/ccy/PseudoCT/Data_2D/Train"
-MODEL_PATH = ""
+MODEL_PATH = "/home/ccy/PseudoCT/GAN/Result/Model/2024-03-27_12-48.pt"
 RESULTS_PATH = "/home/ccy/PseudoCT/GAN/Result"
 
 
